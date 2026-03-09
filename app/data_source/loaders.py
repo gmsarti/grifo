@@ -5,6 +5,7 @@ from langchain_community.document_loaders import (
     Docx2txtLoader,
     TextLoader,
     CSVLoader,
+    WebBaseLoader,
 )
 from langchain_core.documents import Document
 from app.utils.text_processor import get_text_splitter
@@ -38,5 +39,22 @@ class FileIngestionService:
         else:
             raise ValueError(f"Unsupported file extension: {ext}")
 
+        documents = loader.load()
+        return self.text_splitter.split_documents(documents)
+
+
+class WebIngestionService:
+    """
+    Service responsible for loading and splitting content from web URLs.
+    """
+
+    def __init__(self):
+        self.text_splitter = get_text_splitter()
+
+    def process_url(self, url: str) -> List[Document]:
+        """
+        Ingests content from a URL and returns a list of split documents.
+        """
+        loader = WebBaseLoader(url)
         documents = loader.load()
         return self.text_splitter.split_documents(documents)

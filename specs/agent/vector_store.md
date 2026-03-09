@@ -60,7 +60,7 @@ A busca de contexto deve ser robusta:
 
 - [x] [TASK-1] Configurar `RecursiveCharacterTextSplitter` com parâmetros ideais (chunk_size, chunk_overlap).
 - [x] [TASK-2] Implementar `FileIngestionService` para suportar diferentes extensões de arquivo.
-- [ ] [TASK-3] Implementar `WebIngestionService` utilizando `WebBaseLoader`.
+- [x] [TASK-3] Implementar `WebIngestionService` utilizando `WebBaseLoader`.
 - [ ] [TASK-4] Implementar `GoogleDriveIngestionService` utilizando `GoogleDriveLoader`.
 - [ ] [TASK-5] Integrar ingestores com a persistência do ChromaDB.
 - [ ] [TASK-12] Implementar estratégia de geração de IDs únicos (hashing) para suporte a operações de Upsert.
