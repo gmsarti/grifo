@@ -15,6 +15,10 @@ class Settings(BaseSettings):
 
     CHROMA_PERSIST_DIRECTORY: str = "./data/chroma"
 
+    # Parâmetros para o Text Splitter (TASK-1)
+    CHUNK_SIZE: int = 1000
+    CHUNK_OVERLAP: int = 200
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
