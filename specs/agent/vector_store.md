@@ -62,7 +62,7 @@ A busca de contexto deve ser robusta:
 - [x] [TASK-2] Implementar `FileIngestionService` para suportar diferentes extensões de arquivo.
 - [x] [TASK-3] Implementar `WebIngestionService` utilizando `WebBaseLoader`.
 - [ ] [TASK-4] Implementar `GoogleDriveIngestionService` utilizando `GoogleDriveLoader`.
-- [ ] [TASK-5] Integrar ingestores com a persistência do ChromaDB.
+- [x] [TASK-5] Integrar ingestores com a persistência do ChromaDB.
 - [ ] [TASK-12] Implementar estratégia de geração de IDs únicos (hashing) para suporte a operações de Upsert.
 - [ ] [TASK-13] Criar rotinas de exclusão e atualização de documentos no ChromaDB e no índice BM25.
 - [ ] [TASK-14] Implementar extração de metadados padrão (fonte, data, tipo) nos serviços de ingestão.

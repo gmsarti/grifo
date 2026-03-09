@@ -1,11 +1,14 @@
+from typing import List
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
 from app.core.config import settings
+from app.data_source.loaders import FileIngestionService, WebIngestionService
 
 
 class VectorStoreManager:
     """
-    Data Source Layer: Responsável pela ligação ao ChromaDB (RAG).
+    Data Source Layer: Responsável pela ligação ao ChromaDB (RAG) e Ingestão.
     """
 
     def __init__(self):
@@ -16,6 +19,8 @@ class VectorStoreManager:
             persist_directory=settings.CHROMA_PERSIST_DIRECTORY,
             embedding_function=self.embeddings,
         )
+        self.file_service = FileIngestionService()
+        self.web_service = WebIngestionService()
 
     def search_context(self, query: str, k: int = 3) -> str:
         """Busca os documentos mais relevantes na base vetorial."""
@@ -23,3 +28,17 @@ class VectorStoreManager:
         if not docs:
             return "Nenhuma informação encontrada na base de conhecimento."
         return "\n\n".join([doc.page_content for doc in docs])
+
+    def add_documents(self, documents: List[Document]):
+        """Adiciona uma lista de documentos ao banco vetorial."""
+        self.vector_store.add_documents(documents)
+
+    def ingest_file(self, file_path: str):
+        """Processa um arquivo e adiciona ao banco vetorial."""
+        documents = self.file_service.process_file(file_path)
+        self.add_documents(documents)
+
+    def ingest_url(self, url: str):
+        """Processa uma URL e adiciona ao banco vetorial."""
+        documents = self.web_service.process_url(url)
+        self.add_documents(documents)
