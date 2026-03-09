@@ -1,0 +1,20 @@
+[project]
+name = "agent-grifo"
+version = "0.1.0"
+description = "3-Tier Agent Architecture with LangChain and ChromaDB"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "langchain",
+    "langchain-openai",
+    "langchain-community",
+    "chromadb",
+    "pydantic",
+    "pydantic-settings",
+    "streamlit",
+    "httpx",
+    "python-dotenv",
+]
+
+[tool.uv]
+dev-dependencies = ["pytest"]
