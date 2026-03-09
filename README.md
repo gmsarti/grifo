@@ -1,29 +1,110 @@
-Agent Stack Python (3-Tier Architecture)
+<p align="center">
+  <img src="img/grifo_carcara_no_bg.png" alt="Grifo Mascote" width="200">
+</p>
 
-Este repositório é uma implementação padrão de referência para aplicações de Agentes de IA baseada no padrão de 3 camadas (3-Tier Architecture).
+# Grifo
 
-Arquitetura
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-blue.svg" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/LangChain-latest-green.svg" alt="LangChain">
+  <img src="https://img.shields.io/badge/Streamlit-1.55-red.svg" alt="Streamlit">
+  <img src="https://img.shields.io/badge/ChromaDB-latest-orange.svg" alt="ChromaDB">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License MIT">
+</p>
 
-O projeto segue a separação lógica e física proposta para a era dos LLMs (2024-2026):
+> [!IMPORTANT]
+> **Status: Em desenvolvimento.**
+> As funcionalidades planejadas e as especificações detalhadas podem ser encontradas na pasta `specs/`
 
-Camada de Apresentação (Presentation): Interface do usuário via Streamlit (Chat/Dashboard).
+Este repositório é uma implementação padrão de referência para aplicações de Agentes de IA baseada no padrão de **3 camadas (3-Tier Architecture)**. O objetivo é fornecer uma estrutura robusta, escalável e pronta para a era dos Agentes de IA (2024-2026).
 
-Camada de Processamento (Processing): Orquestração, raciocínio de LLM e definição de ferramentas (Agentic Logic).
+## 🚀 Funcionalidades Principais
 
-Camada de Fonte de Dados (Data Source): Recuperação de contexto via RAG e conectores MCP (Model Context Protocol).
+- 🧠 **Agente Reflexivo**: Orquestração de raciocínio avançado com ciclos de crítica e refinamento.
+- 📚 **RAG (Retrieval-Augmented Generation)**: Busca semântica eficiente utilizando ChromaDB.
+- 🛠️ **Ecossistema de Ferramentas**: Integração nativa com ferramentas e APIs externas.
+- 🖥️ **Interface Moderna**: Dashboard interativo e chat desenvolvidos com Streamlit.
+- 🏗️ **Arquitetura 3-Tier**: Separação clara entre Apresentação, Processamento e Dados.
 
-Estrutura do Projeto
+## 🏗️ Arquitetura do Sistema
 
-app/presentation/: Interface do usuário.
+O projeto segue a separação lógica e física proposta para sistemas agentizados modernos:
 
-app/processing/: O "cérebro" do agente e lógica de ferramentas.
+```mermaid
+graph TD
+    subgraph "Presentation Layer (Streamlit)"
+        UI[Web UI / Dashboard]
+    end
 
-app/data_source/: Conexão com bases de conhecimento e APIs externas.
+    subgraph "Processing Layer (LangChain)"
+        Agent[Agentic Logic]
+        Tools[Tool Definition]
+    end
 
-Como rodar
+    subgraph "Data Source Layer"
+        RAG[Vector Store / ChromaDB]
+        APIs[External Connectors / MCP]
+    end
 
-Instale as dependências: pip install -r requirements.txt
+    UI <--> Agent
+    Agent <--> Tools
+    Agent <--> RAG
+    Agent <--> APIs
+```
 
-Configure suas chaves no .env
+---
 
-Execute: streamlit run app/presentation/web_ui.py
+## 📂 Estrutura do Projeto
+
+- **[app/presentation/](file:///home/gusarti/pessoal/code/agent-stack/app/presentation/)**: Interface do usuário e experiência visual.
+- **[app/processing/](file:///home/gusarti/pessoal/code/agent-stack/app/processing/)**: O "cérebro" do agente, orquestração e lógica de raciocínio.
+- **[app/data_source/](file:///home/gusarti/pessoal/code/agent-stack/app/data_source/)**: Conectores de dados, bases vetoriais e APIs externas.
+
+## 🛠️ Como Rodar
+
+### Pré-requisitos
+- Python 3.12+
+- Gerenciador de dependências [uv](https://github.com/astral-sh/uv) (recomendado) ou `pip`.
+
+### Instalação
+
+1. **Clone o repositório:**
+
+   ```bash
+   git clone https://github.com/seu-usuario/projeto-grifo.git
+   cd projeto-grifo
+   ```
+
+2. **Configure o ambiente:**
+
+   ```bash
+   # Usando uv (recomendado)
+   uv venv
+   source .venv/bin/activate  # Linux/macOS
+   uv sync
+   ```
+
+3. **Configuração de Variáveis:**
+
+   Crie um arquivo `.env` na raiz do projeto seguindo o modelo e adicione suas chaves de API:
+   ```env
+   OPENAI_API_KEY=sua_chave_aqui
+   ```
+
+4. **Execute a aplicação:**
+
+   ```bash
+   streamlit run app/presentation/web_ui.py
+   ```
+
+---
+
+## 📜 Licença
+
+Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
+
+## 👤 Autor
+
+**Gustavo** - *AI Enthusiast & Developer*
+- LinkedIn: [@gmsarti](https://www.linkedin.com/in/gmsarti/)
+- GitHub: [@gmsarti](https://github.com/gmsarti)

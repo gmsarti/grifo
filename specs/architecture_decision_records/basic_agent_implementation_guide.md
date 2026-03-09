@@ -1,6 +1,6 @@
-# Guia de Implementação: Basic Agent Stack
+# Guia de Implementação: Projeto Grifo
 
-Este guia detalha os passos para implementar o Agent Stack, integrando o **Reflexion Agent**, o **Vector Store** e os **Endpoints de API**. Siga esta trilha para garantir que todas as camadas estejam alinhadas com as especificações técnicas.
+Este guia detalha os passos para implementar o **Projeto Grifo**, integrando o **Reflexion Agent**, o **Vector Store** e os **Endpoints de API**. Siga esta trilha para garantir que todas as camadas estejam alinhadas com as especificações técnicas.
 
 ---
 

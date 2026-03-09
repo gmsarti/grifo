@@ -1,6 +1,6 @@
 # Especificação: Vector Store (RAG)
 
-Este documento define a arquitetura, funcionalidades e o plano de implementação para o módulo de armazenamento e busca vetorial (Vector Store) do Agent Stack.
+Este documento define a arquitetura, funcionalidades e o plano de implementação para o módulo de armazenamento e busca vetorial (Vector Store) do **Projeto Grifo**.
 
 ## Arquitetura e Tecnologias
 
