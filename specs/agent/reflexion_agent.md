@@ -61,6 +61,22 @@ Os prompts são modulares (`ChatPromptTemplate.partial`):
 - **Smart Search:** Esta ferramenta chama o método `search` do `VectorStoreManager`.
 - **Fallback Decidido:** A busca web (ex: Tavily) ocorrerá **internamente** no fluxo de busca do Vector Store se o `retrieval_grader` indicar que os documentos recuperados são irrelevantes (CRAG). Isso simplifica a lógica do agente, que sempre recebe o "melhor contexto disponível".
 
+## Gestão de Memória
+
+O agente diferencia entre memória de curto prazo (dentro da sessão) e memória de longo prazo (persistente entre sessões).
+
+### 1. Curto Prazo (Conversational Memory)
+
+- **Implementação:** `ConversationBufferMemory` com vectorstore **ChromaDB**.
+- **Objetivo:** Realizar RAG sobre o histórico recente da conversa atual para manter o contexto sem sobrecarregar a janela de contexto do LLM com mensagens irrelevantes.
+- **Escopo:** Thread-scoped (gerenciado via `thread_id` no LangGraph).
+
+### 2. Longo Prazo (Cross-Session Memory)
+
+- **Implementação:** LangGraph `BaseStore` (inicialmente `InMemoryStore`, migrando para `PostgresStore`).
+- **Objetivo:** Persistir fatos, preferências do usuário e aprendizados do agente entre diferentes sessões.
+- **Busca:** Utiliza `store.search()` com embeddings para busca semântica de fatos relevantes ao contexto atual.
+
 ## Lista de Tasks (Backlog Detalhado)
 
 ### [PHASE 1] Estrutura e Schemas
@@ -82,21 +98,32 @@ Os prompts são modulares (`ChatPromptTemplate.partial`):
 - [ ] [TASK-3.2] Configurar o bind das ferramentas (`AnswerQuestion` e `ReviseAnswer`) aos LLMs.
 - [ ] [TASK-3.3] Adicionar suporte a `MAX_ITERATIONS` configurável via variáveis de ambiente.
 
-### [PHASE 4] Qualidade e Observabilidade
+### [PHASE 4] Gestão de Memória (Curto e Longo Prazo)
 
-- [ ] [TASK-4.1] **LangSmith Tracing & Metadata**:
+- [ ] [TASK-4.1] Implementar `ConversationBufferMemory` com ChromaDB para histórico de mensagens.
+- [ ] [TASK-4.2] Configurar `InMemoryStore` para memória de longo prazo (cross-sessões).
+- [ ] [TASK-4.3] Implementar busca semântica (`store.search()`) com embeddings na memória de longo prazo.
+- [ ] [TASK-4.4] Migrar de `InMemoryStore` para `PostgresStore` para persistência em produção.
+- [ ] [TASK-4.5] **Suíte de Testes de Memória**:
+  - Validar persistência e recuperação do histórico no ChromaDB.
+  - Testar busca semântica no `BaseStore` (InMemory e Postgres).
+  - Garantir o isolamento de memória por `thread_id`.
+
+### [PHASE 5] Qualidade e Observabilidade
+
+- [ ] [TASK-5.1] **LangSmith Tracing & Metadata**:
   - Configurar traces detalhados para cada nó (`draft`, `revise`, `execute_tools`).
   - Adicionar metadata customizada: `iteration_count`, `model_name`, `total_tokens`.
-- [ ] [TASK-4.2] **Suite de Testes Unitários**:
+- [ ] [TASK-5.2] **Suite de Testes Unitários**:
   - Validar extração de críticas do schema `Reflection`.
   - Testar lógica de saída do `event_loop` em limites de iteração.
   - Mockar respostas de ferramentas para garantir resiliência do revisor.
-- [ ] [TASK-4.3] **Avaliação de Qualidade (LLM-as-a-Judge)**:
+- [ ] [TASK-5.3] **Avaliação de Qualidade (LLM-as-a-Judge)**:
   - Implementar um avaliador que compare o Primeiro Draft vs. Revisão Final.
   - Critérios: Alinhamento com Direitos Humanos (conforme prompt), Redução de superfluidades, Acurácia factual.
-- [ ] [TASK-4.4] **Monitoramento de Custo e Performance**:
+- [ ] [TASK-5.4] **Monitoramento de Custo e Performance**:
   - Rastrear latência média por ciclo de reflexão.
   - Implementar alerta/log para consumo excessivo de tokens em revisões longas.
-- [ ] [TASK-4.5] **Dataset de Regressão (Golden Dataset)**:
+- [ ] [TASK-5.5] **Dataset de Regressão (Golden Dataset)**:
   - Criar conjunto de 10 perguntas complexas com "gabaritos" de pontos críticos que a reflexão DEVE abordar.
   - Automatizar execução do benchmark para garantir que melhorias no prompt não causem regressão.
