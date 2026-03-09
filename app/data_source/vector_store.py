@@ -21,6 +21,8 @@ class VectorStoreManager:
         )
         self.file_service = FileIngestionService()
         self.web_service = WebIngestionService()
+        self.bm25_retriever = None
+        self._all_documents = []  # Keep track of documents for BM25 re-initialization
 
     def search_context(self, query: str, k: int = 3) -> str:
         """Busca os documentos mais relevantes na base vetorial."""
@@ -29,9 +31,24 @@ class VectorStoreManager:
             return "Nenhuma informação encontrada na base de conhecimento."
         return "\n\n".join([doc.page_content for doc in docs])
 
+    def search_bm25(self, query: str, k: int = 3) -> List[Document]:
+        """Busca documentos usando BM25 (palavras-chave)."""
+        if not self.bm25_retriever:
+            return []
+        return self.bm25_retriever.invoke(query, k=k)
+
     def add_documents(self, documents: List[Document]):
-        """Adiciona uma lista de documentos ao banco vetorial."""
+        """Adiciona uma lista de documentos ao banco vetorial e atualiza o BM25."""
         self.vector_store.add_documents(documents)
+        self._all_documents.extend(documents)
+
+        # O BM25Retriever do LangChain não suporta adição incremental nativamente
+        # de forma persistente e simples, então reinicializamos com todos os docs.
+        # Em produção com muitos docs, isso deve ser otimizado (TASK-16).
+        from langchain_community.retrievers import BM25Retriever
+
+        if self._all_documents:
+            self.bm25_retriever = BM25Retriever.from_documents(self._all_documents)
 
     def ingest_file(self, file_path: str):
         """Processa um arquivo e adiciona ao banco vetorial."""
