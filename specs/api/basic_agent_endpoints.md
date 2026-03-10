@@ -143,3 +143,25 @@ A implementação deve seguir os princípios de desacoplamento definidos:
 
 - O **AgentOrchestrator** (classe de serviço) é injetado via `Depends` nos endpoints de chat.
 - O **VectorStoreManager** (classe de serviço) é injetado nos endpoints de ingestão e listagem.
+
+---
+
+## Lista de Tasks (Backlog)
+
+### 1. Chat & Agente
+- [ ] [TASK-API-1] Implementar endpoint `POST /api/v1/chat` integrado ao `AgentOrchestrator`.
+- [ ] [TASK-API-2] Adicionar suporte a `thread_id` para persistência de memória no chat.
+- [ ] [TASK-API-3] Retornar referências (fontes) e metadados de execução no JSON de resposta.
+
+### 2. Ingestão de Documentos
+- [ ] [TASK-API-4] Implementar `POST /api/v1/ingest/upload` com suporte a multipart form-data.
+- [ ] [TASK-API-5] Implementar `POST /api/v1/ingest/url` para processamento de links web.
+- [ ] [TASK-API-6] Validar extensões de arquivo e tratar erros de parsing nos loaders.
+
+### 3. Gerenciamento de Documentos
+- [ ] [TASK-API-7] Implementar `GET /api/v1/documents` consumindo o `VectorStoreManager`.
+- [ ] [TASK-API-8] Implementar `DELETE /api/v1/documents/{doc_id}` para remoção no ChromaDB e BM25.
+
+### 4. Qualidade e Testes
+- [ ] [TASK-API-9] Criar suíte de testes de integração para os endpoints de ingestão.
+- [ ] [TASK-API-10] Validar o tratamento de erros padronizado em todos os endpoints.

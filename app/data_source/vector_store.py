@@ -107,7 +107,6 @@ class VectorStoreManager:
         """Adiciona docs, persiste e atualiza retrievers."""
         self._all_documents.extend(documents)
         self.vector_store.add_documents(documents)
-        self.vector_store.persist()
 
         if self._all_documents:
             self.bm25_retriever = BM25Retriever.from_documents(
