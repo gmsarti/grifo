@@ -72,7 +72,7 @@ A busca de contexto deve ser robusta:
 
 - [x] [TASK-6] Configurar `BM25Retriever` a partir dos documentos ingeridos.
 - [x] [TASK-7] Configurar `EnsembleRetriever` (substituído por HybridRetriever RRF) para combinar Busca Vetorial e BM25.
-- [ ] [TASK-8] Expor interface de busca simplificada no `VectorStoreManager`.
+- [x] [TASK-8] Expor interface de busca simplificada no `VectorStoreManager`.
 - [ ] [TASK-16] Implementar sistema de persistência em disco para o estado/índice do BM25Retriever.
 - [ ] [TASK-17] Adicionar componente de Document Compressor / Reranker após o EnsembleRetriever para refinar os resultados.
 - [ ] [TASK-18] Implementar suporte a pré-filtros de busca (Metadata Filtering) no VectorStoreManager.

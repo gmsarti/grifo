@@ -68,6 +68,20 @@ class VectorStoreManager:
         self.hybrid_retriever = None  # replaced ensemble
         self._all_documents = []  # Track all docs for BM25 updates
 
+    def search(self, query: str, search_type: str = "hybrid", k: int = 3) -> List[Document]:
+        """
+        Unified search interface for the agent.
+        Available types: 'hybrid', 'vector', 'bm25'.
+        Defaults to 'hybrid'.
+        """
+        if search_type == "vector":
+            return self.vector_store.similarity_search(query, k=k)
+        elif search_type == "bm25":
+            return self.search_bm25(query, k=k)
+        else:
+            # Default to hybrid
+            return self.search_hybrid(query, k=k)
+
     def search_context(self, query: str, k: int = 3) -> str:
         """Busca semântica pura via vector store."""
         docs = self.vector_store.similarity_search(query, k=k)

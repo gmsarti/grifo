@@ -56,6 +56,37 @@ def test_hybrid_retrieval(vector_manager):
     mock_bm25.invoke.assert_called()
 
 
+def test_unified_search_interface(vector_manager):
+    docs = [Document(page_content="teste", metadata={"id": 1})]
+    
+    # Mock carefully to avoid Pydantic validation error in add_documents
+    mock_retriever = MagicMock(spec=BaseRetriever)
+    vector_manager.vector_store.as_retriever.return_value = mock_retriever
+    
+    vector_manager.add_documents(docs)
+
+    with patch.object(vector_manager, "search_hybrid") as mock_hybrid:
+        mock_hybrid.return_value = docs
+        results = vector_manager.search("query", search_type="hybrid")
+        assert results == docs
+        mock_hybrid.assert_called_once_with("query", k=3)
+
+    with (
+        patch.object(vector_manager.vector_store, "similarity_search") as mock_vec,
+        patch.object(vector_manager, "search_bm25") as mock_bm25,
+    ):
+        mock_vec.return_value = docs
+        mock_bm25.return_value = docs
+
+        # Test vector search
+        vector_manager.search("query", search_type="vector")
+        mock_vec.assert_called_once_with("query", k=3)
+
+        # Test bm25 search
+        vector_manager.search("query", search_type="bm25")
+        mock_bm25.assert_called_once_with("query", k=3)
+
+
 if __name__ == "__main__":
     # For manual verification if needed
     pass
