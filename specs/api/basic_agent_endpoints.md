@@ -154,7 +154,7 @@ A implementação deve seguir os princípios de desacoplamento definidos:
 - [ ] [TASK-API-3] Retornar referências (fontes) e metadados de execução no JSON de resposta.
 
 ### 2. Ingestão de Documentos
-- [ ] [TASK-API-4] Implementar `POST /api/v1/ingest/upload` com suporte a multipart form-data.
+- [X] [TASK-API-4] Implementar `POST /api/v1/ingest/upload` com suporte a multipart form-data.
 - [ ] [TASK-API-5] Implementar `POST /api/v1/ingest/url` para processamento de links web.
 - [ ] [TASK-API-6] Validar extensões de arquivo e tratar erros de parsing nos loaders.
 

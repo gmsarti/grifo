@@ -22,6 +22,10 @@ class ChatResponse(BaseModel):
     response: str
 
 
+class UrlRequest(BaseModel):
+    url: str
+
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """
@@ -57,3 +61,27 @@ async def upload_file(file: UploadFile = File(...)):
     finally:
         if temp_path.exists():
             temp_path.unlink()
+
+
+@app.post("/api/v1/ingest/url")
+async def ingest_url(request: UrlRequest):
+    """
+    Processa e armazena conteúdo de uma URL.
+    """
+    try:
+        vector_store_manager.ingest_url(request.url)
+        return {"status": "success", "url": request.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/documents")
+async def list_documents():
+    """
+    Retorna a lista de documentos (fontes) ingeridos no sistema.
+    """
+    try:
+        docs = vector_store_manager.list_documents()
+        return {"status": "success", "documents": docs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

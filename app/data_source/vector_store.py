@@ -129,3 +129,28 @@ class VectorStoreManager:
         """Ingestão de URL."""
         documents = self.web_service.process_url(url)
         self.add_documents(documents)
+
+    def list_documents(self) -> List[dict]:
+        """
+        Lista todos os documentos únicos (fontes) armazenados no ChromaDB.
+        Retorna uma lista de metadados únicos baseados na chave 'source'.
+        """
+        try:
+            # Obtemos todos os metadados da coleção
+            # Nota: O Chroma permite filtrar ou pedir apenas 'metadatas'
+            res = self.vector_store.get(include=["metadatas"])
+            metadatas = res.get("metadatas", [])
+            
+            # Extraímos fontes únicas
+            unique_sources = {}
+            for meta in metadatas:
+                source = meta.get("source", "unknown")
+                if source not in unique_sources:
+                    unique_sources[source] = {
+                        "source": source,
+                        "type": "url" if source.startswith("http") else "file"
+                    }
+            
+            return list(unique_sources.values())
+        except Exception:
+            return []
