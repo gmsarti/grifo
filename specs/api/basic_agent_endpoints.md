@@ -155,13 +155,13 @@ A implementação deve seguir os princípios de desacoplamento definidos:
 
 ### 2. Ingestão de Documentos
 - [X] [TASK-API-4] Implementar `POST /api/v1/ingest/upload` com suporte a multipart form-data.
-- [ ] [TASK-API-5] Implementar `POST /api/v1/ingest/url` para processamento de links web.
+- [X] [TASK-API-5] Implementar `POST /api/v1/ingest/url` para processamento de links web.
 - [ ] [TASK-API-6] Validar extensões de arquivo e tratar erros de parsing nos loaders.
 
 ### 3. Gerenciamento de Documentos
-- [ ] [TASK-API-7] Implementar `GET /api/v1/documents` consumindo o `VectorStoreManager`.
+- [X] [TASK-API-7] Implementar `GET /api/v1/documents` consumindo o `VectorStoreManager`.
 - [ ] [TASK-API-8] Implementar `DELETE /api/v1/documents/{doc_id}` para remoção no ChromaDB e BM25.
 
 ### 4. Qualidade e Testes
-- [ ] [TASK-API-9] Criar suíte de testes de integração para os endpoints de ingestão.
+- [X] [TASK-API-9] Criar suíte de testes de integração para os endpoints de ingestão.
 - [ ] [TASK-API-10] Validar o tratamento de erros padronizado em todos os endpoints.

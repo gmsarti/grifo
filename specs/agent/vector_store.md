@@ -90,7 +90,7 @@ A busca de contexto deve ser robusta:
 
 #### Testes de Integração
 
-- [ ] [TASK-10.1] Pipeline de Ingestão: Testar fluxo completo do arquivo até a persistência no Chroma e BM25.
+- [X] [TASK-10.1] Pipeline de Ingestão: Testar fluxo completo do arquivo até a persistência no Chroma e BM25.
 - [ ] [TASK-10.2] Pipeline de Busca: Validar fluxo Ensemble -> Rerank -> Grader -> Contexto Final.
 - [ ] [TASK-10.3] Testar resiliência a Rate Limits da OpenAI com retries e logs de erro.
 
