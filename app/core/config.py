@@ -17,13 +17,11 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIRECTORY: str = "./data/chroma"
     TAVILY_API_KEY: str = ""
 
-    # Parâmetros para o Reflexion Agent (PHASE 2)
     REFLEXION_MAX_ITERATIONS: int = 2
     LANGSMITH_API_KEY: str = ""
 
-    # Parâmetros para o Text Splitter (TASK-1)
     CHUNK_SIZE: int = 1000
-    CHUNK_OVERLAP: int = 200
+    CHUNK_OVERLAP: int = int(CHUNK_SIZE * 0.2)
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
