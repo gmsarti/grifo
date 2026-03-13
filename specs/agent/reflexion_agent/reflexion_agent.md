@@ -8,12 +8,22 @@ O agente utiliza um padrão de "Reflexão" (Self-Correction) para garantir que a
 
 ### 1. Grafo de Estados (LangGraph)
 
-O fluxo é gerenciado por uma máquina de estados com os seguintes nós:
+O fluxo é gerenciado por uma máquina de estados com o seguinte padrão cíclico:
+
+```mermaid
+graph TD
+    START((START)) --> Draft[draft_node]
+    Draft --> ExecuteTools[execute_tools]
+    ExecuteTools --> Revise[revise_node]
+    Revise --> Loop{event_loop}
+    Loop -- "Continue (Iteration < MAX)" --> ExecuteTools
+    Loop -- "Finish (Iteration >= MAX)" --> END((END))
+```
 
 - **Node: Draft:** Gera a resposta inicial (~250 palavras) e a primeira reflexão.
-- **Node: Execute Tools:** Executa as buscas recomendadas pelo agente para complementar a informação.
+- **Node: Execute Tools:** A `ToolNode` que executa as buscas recomendadas (queries) geradas pelo agente.
 - **Node: Revise:** Reescreve a resposta com base no feedback e nos novos dados coletados.
-- **Edge: Event Loop:** Controla o ciclo de repetição baseado no número de visitas às ferramentas (`MAX_ITERATIONS = 2`).
+- **Edge: Event Loop:** Controla o ciclo de repetição baseado no número de visitas às ferramentas (`REFLEXION_MAX_ITERATIONS` configurado em `config.py`).
 
 ### 2. Estrutura de Mensagens e Estado
 
@@ -51,15 +61,47 @@ class ReviseAnswer(AnswerQuestion):
 
 Os prompts são modulares (`ChatPromptTemplate.partial`):
 
-- **Base:** Define o papel de "Pesquisador Especialista" e a instrução de ser "severo na crítica".
-- **Draft:** Instrução para resposta detalhada inicial.
-- **Revise:** Instrução para usar a crítica anterior para remover supérfluos e adequar o tom.
+- **Actor Prompt (Base):**
 
-## Integração com Vector Store
+  ```text
+  You are expert researcher.
+  Current time: {time}
 
-- O nó `execute_tools` utiliza uma ferramenta unificada de busca (`SearchTool`).
-- **Smart Search:** Esta ferramenta chama o método `search` do `VectorStoreManager`.
-- **Fallback Decidido:** A busca web (ex: Tavily) ocorrerá **internamente** no fluxo de busca do Vector Store se o `retrieval_grader` indicar que os documentos recuperados são irrelevantes (CRAG). Isso simplifica a lógica do agente, que sempre recebe o "melhor contexto disponível".
+  1. {first_instruction}
+  2. Reflect and critique your answer. Be severe to maximize improvement.
+  3. Recommend search queries to research information and improve your answer.
+  ```
+
+- **Draft:** Instrução para "Providenciar uma resposta detalhada de ~250 palavras".
+- **Revise:**
+
+  ```text
+  Revise your previous answer using the new information.
+  - You should use the previous critique to improve the story
+  - You should use the previous critique to remove superfluous information
+  - You should use the previous critique to make the story more suitable to social context
+  ```
+
+## Integração com Ferramentas
+
+- **TavilySearch:** Utilizada como ferramenta primária de busca web.
+- **Smart Search:** O nó `execute_tools` mapeia as `search_queries` para a ferramenta unificada.
+- **Fallback CRAG:** A busca web ocorrerá **internamente** no fluxo de busca do Vector Store se o `retrieval_grader` indicar que os documentos recuperados são irrelevantes.
+- **Configurações:** O número máximo de iterações é controlado pela variável `REFLEXION_MAX_ITERATIONS`.
+
+## Dependências Técnicas
+
+- `langchain`: Framework de orquestração.
+- `langgraph`: Gestão de estado e fluxos em grafo.
+- `langchain_openai`: Provedor de LLM (GPT-4o / GPT-4o-mini).
+- `langchain_tavily`: Integração com busca Tavily.
+
+## Perfis de LLM
+
+O agente utiliza perfis de LLM especializados para otimizar custo e qualidade, gerenciados via `app/core/llm.py`:
+
+- **REASONER (`MODEL_REASONER`):** Utilizado para os nós de **Revise** e para a geração de **Critiques (Reflection)**. Requer alta capacidade de raciocínio.
+- **FAST (`MODEL_FAST`):** Utilizado para o nó de **Draft** (rascunho inicial) e tarefas de roteamento/classificação auxiliares. Foco em agilidade.
 
 ## Gestão de Memória
 
@@ -79,24 +121,30 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ## Lista de Tasks (Backlog Detalhado)
 
+### [PHASE 0] Setup e Ambiente
+
+- [ ] [TASK-0.1] Configurar `.env` com `OPENAI_API_KEY`, `TAVILY_API_KEY` e `LANGSMITH_API_KEY`.
+- [ ] [TASK-0.2] Validar instâncias de `Settings` em `app/core/config.py`.
+- [ ] [TASK-0.3] Instalar dependências: `langgraph`, `langchain-tavily`, `langchain-openai`.
+
 ### [PHASE 1] Estrutura e Schemas
 
 - [ ] [TASK-1.1] Implementar schemas Pydantic (`Reflection`, `AnswerQuestion`, `ReviseAnswer`) em `schemas.py`.
 - [ ] [TASK-1.2] Definir o `MessagesState` e a estrutura básica do grafo no LangGraph.
-- [ ] [TASK-1.3] Criar os templates de prompt base em `chains.py` usando `partial` para injeção de tempo e instruções.
+- [ ] [TASK-1.3] Criar os templates de prompt base em `chains.py` usando `partial`.
 
-### [PHASE 2] Nós e Lógica do Grafo
+### [PHASE 2] Ferramentas e Chains
 
-- [ ] [TASK-2.1] Implementar o nó `draft_node` usando o `first_responder` chain.
-- [ ] [TASK-2.2] Implementar o nó `revise_node` usando o `revisor` chain.
-- [ ] [TASK-2.3] Codificar o `event_loop` para contar mensagens de ferramentas e decidir a parada.
-- [ ] [TASK-2.4] Configurar o `execute_tools` usando `ToolNode` e `StructuredTool` para mapear `search_queries`.
+- [ ] [TASK-2.1] Configurar `TavilySearch` e criar o `ToolNode` em `tool_executor.py`.
+- [ ] [TASK-2.2] Implementar `first_responder` chain com bind de `AnswerQuestion`.
+- [ ] [TASK-2.3] Implementar `revisor` chain com bind de `ReviseAnswer`.
 
-### [PHASE 3] Integração e Refinamento
+### [PHASE 3] Grafo e Orquestração
 
-- [ ] [TASK-3.1] Integrar a busca no Vector Store (`VectorStoreManager`) dentro da ferramenta de execução.
-- [ ] [TASK-3.2] Configurar o bind das ferramentas (`AnswerQuestion` e `ReviseAnswer`) aos LLMs.
-- [ ] [TASK-3.3] Adicionar suporte a `MAX_ITERATIONS` configurável via variáveis de ambiente.
+- [ ] [TASK-3.1] Implementar `draft_node` e `revise_node`.
+- [ ] [TASK-3.2] Codificar o `event_loop` para contar `ToolMessage` e respeitar `REFLEXION_MAX_ITERATIONS`.
+- [ ] [TASK-3.3] Criar `AgentOrchestrator` em `app/processing/agent.py` para compilar e expor o grafo.
+- [ ] [TASK-3.4] Integrar busca híbrida (Vector Store + Tavily fallback) no fluxo de ferramentas.
 
 ### [PHASE 4] Gestão de Memória (Curto e Longo Prazo)
 
@@ -127,3 +175,9 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 - [ ] [TASK-5.5] **Dataset de Regressão (Golden Dataset)**:
   - Criar conjunto de 10 perguntas complexas com "gabaritos" de pontos críticos que a reflexão DEVE abordar.
   - Automatizar execução do benchmark para garantir que melhorias no prompt não causem regressão.
+
+---
+
+## Guia de Replicação
+
+Para detalhes sobre como portar este agente para um novo repositório, consulte o [Replication Guide](file:///home/gusarti/pessoal/code/agent-stack/specs/agent/reflexion_agent/replication_guide.md).
