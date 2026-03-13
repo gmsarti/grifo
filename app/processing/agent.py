@@ -9,6 +9,10 @@ from app.processing.tools import AGENT_TOOLS
 from app.processing.chains import get_first_responder, get_revisor
 from app.processing.tool_executor import execute_tools as reflexion_tool_node
 from app.processing.memory import VectorizedMessageHistory, StoreMemoryManager
+from app.core.logging import get_logger, timed_process
+from langchain_community.callbacks.manager import get_openai_callback
+
+logger = get_logger(__name__)
 
 # Plan for MAX_ITERATIONS from config or default
 MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
@@ -18,6 +22,7 @@ class AgentOrchestrator:
     """
     Orchestrates the Reflexion Agent graph using specialized LLM profiles
     and advanced memory management (Short-term vectorized + Long-term store).
+    Includes observability (LangSmith) and cost tracking.
     """
 
     def __init__(self, store: Optional[InMemoryStore] = None):
@@ -58,53 +63,53 @@ class AgentOrchestrator:
 
     async def retrieve_memory_node(self, state: MessagesState, config: dict):
         """
-        TASK-4.1 & 4.3: Retrieves relevant context from vectorized history
-        and long-term store based on the last user message.
+        Retrieves relevant context from vectorized history and long-term store.
+        (Timed process for observability)
         """
-        thread_id = config.get("configurable", {}).get("thread_id", "default")
+        configurable = config.get("configurable", {})
+        thread_id = configurable.get("thread_id", "default")
+        user_id = configurable.get("user_id", "default_user")
+        project_id = configurable.get("project_id", "default_project")
+        
         last_message = state["messages"][-1].content if state["messages"] else ""
         
-        context_parts = []
-        
-        # 1. Short-term Vectorized History
-        history_db = VectorizedMessageHistory(thread_id)
-        hist_context = history_db.search_history(last_message)
-        if hist_context:
-            context_parts.append(f"Relevant Conversation History:\n{hist_context}")
+        with timed_process("Memory Retrieval", logger, metadata={"thread_id": thread_id, "user_id": user_id, "project_id": project_id}):
+            context_parts = []
             
-        # 2. Long-term Store (Cross-session)
-        # Assuming user_id is passed in config or derived from thread_id
-        user_id = config.get("configurable", {}).get("user_id", "default_user")
-        memories = await self.store_manager.search_memories(user_id, last_message)
-        if memories:
-            mem_text = "\n".join([f"- {m.value['content']}" for m in memories])
-            context_parts.append(f"Known Facts/Preferences:\n{mem_text}")
-            
-        if context_parts:
-            # We inject this context as a system message or a prepend to the prompt
-            # For simplicity, we add a SystemMessage with context
-            from langchain_core.messages import SystemMessage
-            combined_context = "\n\n".join(context_parts)
-            memory_msg = SystemMessage(
-                content=f"Context from memory:\n{combined_context}",
-                name="memory_context"
-            )
-            return {"messages": [memory_msg]}
+            # 1. Short-term Vectorized History
+            history_db = VectorizedMessageHistory(thread_id)
+            hist_context = history_db.search_history(last_message)
+            if hist_context:
+                context_parts.append(f"Relevant Conversation History:\n{hist_context}")
+                
+            # 2. Long-term Store (Cross-session)
+            memories = await self.store_manager.search_memories(user_id, last_message)
+            if memories:
+                mem_text = "\n".join([f"- {m.value['content']}" for m in memories])
+                context_parts.append(f"Known Facts/Preferences:\n{mem_text}")
+                
+            if context_parts:
+                from langchain_core.messages import SystemMessage
+                combined_context = "\n\n".join(context_parts)
+                memory_msg = SystemMessage(
+                    content=f"Context from memory:\n{combined_context}",
+                    name="memory_context"
+                )
+                return {"messages": [memory_msg]}
         
         return {"messages": []}
 
     async def draft_node(self, state: MessagesState):
         """Node for the initial draft using the FAST model."""
-        response = await self.first_responder.ainvoke({"messages": state["messages"]})
-        
-        # Update vectorized history with user message and response
-        # (This could also be done in a separate edge or listener)
-        return {"messages": [response]}
+        with timed_process("Drafting Responder", logger):
+            response = await self.first_responder.ainvoke({"messages": state["messages"]})
+            return {"messages": [response]}
 
     async def revise_node(self, state: MessagesState):
         """Node for revising the answer using the REASONER model."""
-        response = await self.revisor.ainvoke({"messages": state["messages"]})
-        return {"messages": [response]}
+        with timed_process("Revision Process", logger):
+            response = await self.revisor.ainvoke({"messages": state["messages"]})
+            return {"messages": [response]}
 
     def event_loop(self, state: MessagesState) -> Literal["execute_tools", "__end__"]:
         """Controls the iteration cycle based on tool visits."""
@@ -115,20 +120,48 @@ class AgentOrchestrator:
             return END
         return "execute_tools"
 
-    async def process_message(self, message: str, thread_id: str = None, user_id: str = None) -> str:
-        """Processes a user message through the graph."""
+    async def process_message(self, message: str, thread_id: str = None, user_id: str = None, project_id: str = None) -> str:
+        """Processes a user message through the graph with monitoring."""
         thread_id = thread_id or "default"
         user_id = user_id or "default_user"
+        project_id = project_id or "default_project"
         
-        config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
+        config = {
+            "configurable": {
+                "thread_id": thread_id, 
+                "user_id": user_id,
+                "project_id": project_id
+            },
+            "metadata": {
+                "thread_id": thread_id,
+                "user_id": user_id,
+                "project_id": project_id
+            }
+        }
+        
         inputs = {"messages": [HumanMessage(content=message)]}
         
-        # Update short-term history with the new user message
+        # Update short-term history
         history_db = VectorizedMessageHistory(thread_id)
         await history_db.add_message(inputs["messages"][0])
         
         try:
-            result = await self.graph.ainvoke(inputs, config=config)
+            with get_openai_callback() as cb:
+                with timed_process("Graph Execution", logger, metadata=config["metadata"]):
+                    result = await self.graph.ainvoke(inputs, config=config)
+                
+                logger.info(
+                    "Token usage and tokens details", 
+                    extra={
+                        "metadata": config["metadata"],
+                        "tokens": {
+                            "total_tokens": cb.total_tokens,
+                            "prompt_tokens": cb.prompt_tokens,
+                            "completion_tokens": cb.completion_tokens,
+                            "total_cost": cb.total_cost
+                        }
+                    }
+                )
             
             # Extract final AI Message and update history
             if "messages" in result and len(result["messages"]) > 0:
@@ -144,4 +177,5 @@ class AgentOrchestrator:
                     
             return "No response generated."
         except Exception as e:
+            logger.error(f"Error processing message: {str(e)}", extra={"metadata": config["metadata"]})
             return f"Error processing message: {str(e)}"

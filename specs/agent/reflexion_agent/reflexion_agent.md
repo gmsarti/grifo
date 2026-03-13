@@ -159,19 +159,19 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ### [PHASE 5] Qualidade e Observabilidade
 
-- [ ] [TASK-5.1] **LangSmith Tracing & Metadata**:
-  - Configurar traces detalhados para cada nó (`draft`, `revise`, `execute_tools`).
-  - Adicionar metadata customizada: `iteration_count`, `model_name`, `total_tokens`.
-- [ ] [TASK-5.2] **Suite de Testes Unitários**:
+- [x] [TASK-5.1] **LangSmith Tracing & Metadata**:
+  - [x] Configurar traces detalhados para cada nó (`draft`, `revise`, `execute_tools`).
+  - [x] Adicionar metadata customizada: `thread_id`, `user_id`, `project_id`.
+- [x] [TASK-5.2] **Suite de Testes Unitários**:
   - Validar extração de críticas do schema `Reflection`.
   - Testar lógica de saída do `event_loop` em limites de iteração.
   - Mockar respostas de ferramentas para garantir resiliência do revisor.
 - [ ] [TASK-5.3] **Avaliação de Qualidade (LLM-as-a-Judge)**:
   - Implementar um avaliador que compare o Primeiro Draft vs. Revisão Final.
   - Critérios: Alinhamento com Direitos Humanos (conforme prompt), Redução de superfluidades, Acurácia factual.
-- [ ] [TASK-5.4] **Monitoramento de Custo e Performance**:
-  - Rastrear latência média por ciclo de reflexão.
-  - Implementar alerta/log para consumo excessivo de tokens em revisões longas.
+- [x] [TASK-5.4] **Monitoramento de Custo e Performance**:
+  - [x] Rastrear latência média por ciclo de reflexão (Logging + Timing).
+  - [x] Implementar log estruturado para consumo de tokens e custo.
 - [ ] [TASK-5.5] **Dataset de Regressão (Golden Dataset)**:
   - Criar conjunto de 10 perguntas complexas com "gabaritos" de pontos críticos que a reflexão DEVE abordar.
   - Automatizar execução do benchmark para garantir que melhorias no prompt não causem regressão.
