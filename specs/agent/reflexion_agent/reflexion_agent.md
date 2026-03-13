@@ -141,10 +141,10 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ### [PHASE 3] Grafo e Orquestração
 
-- [ ] [TASK-3.1] Implementar `draft_node` e `revise_node`.
-- [ ] [TASK-3.2] Codificar o `event_loop` para contar `ToolMessage` e respeitar `REFLEXION_MAX_ITERATIONS`.
-- [ ] [TASK-3.3] Criar `AgentOrchestrator` em `app/processing/agent.py` para compilar e expor o grafo.
-- [ ] [TASK-3.4] Integrar busca híbrida (Vector Store + Tavily fallback) no fluxo de ferramentas.
+- [x] [TASK-3.1] Implementar `draft_node` e `revise_node`.
+- [x] [TASK-3.2] Codificar o `event_loop` para contar `ToolMessage` e respeitar `REFLEXION_MAX_ITERATIONS`.
+- [x] [TASK-3.3] Criar `AgentOrchestrator` em `app/processing/agent.py` para compilar e expor o grafo.
+- [x] [TASK-3.4] Integrar busca híbrida (Vector Store + Tavily fallback) no fluxo de ferramentas.
 
 ### [PHASE 4] Gestão de Memória (Curto e Longo Prazo)
 
