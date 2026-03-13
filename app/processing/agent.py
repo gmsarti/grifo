@@ -1,11 +1,11 @@
 from typing import Literal
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 from langgraph.graph import END, START, StateGraph, MessagesState
-from langgraph.prebuilt import ToolNode
 from app.core.config import settings
 from app.core.llm import get_reasoner, get_fast_model
 from app.processing.tools import AGENT_TOOLS
 from app.processing.chains import get_first_responder, get_revisor
+from app.processing.tool_executor import execute_tools as reflexion_tool_node
 
 # Plan for MAX_ITERATIONS from config or default
 MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
@@ -19,7 +19,8 @@ class AgentOrchestrator:
     def __init__(self):
         self.fast_llm = get_fast_model()
         self.reasoner_llm = get_reasoner()
-        self.tools = AGENT_TOOLS
+        self.tools = AGENT_TOOLS  # Generic tools (can be used elsewhere)
+        self.reflexion_tools = reflexion_tool_node  # Specific tools for Reflexion
 
         # Initialize chains
         self.first_responder = get_first_responder(self.fast_llm)
@@ -33,7 +34,7 @@ class AgentOrchestrator:
 
         # Add nodes
         builder.add_node("draft", self.draft_node)
-        builder.add_node("execute_tools", ToolNode(self.tools))
+        builder.add_node("execute_tools", self.reflexion_tools)
         builder.add_node("revise", self.revise_node)
 
         # Define edges
