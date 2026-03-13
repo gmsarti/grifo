@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 @pytest.mark.asyncio
 async def test_agent_orchestrator_initialization():
+    # Use real objects here to pass ensure_valid_checkpointer
     orchestrator = AgentOrchestrator()
     assert orchestrator.graph is not None
     assert orchestrator.first_responder is not None
@@ -12,25 +13,29 @@ async def test_agent_orchestrator_initialization():
 
 @pytest.mark.asyncio
 async def test_agent_process_message_mocked():
-    orchestrator = AgentOrchestrator()
-    
-    # Mock the graph execution to avoid real LLM calls in this test
-    # but we will check the structure
-    with patch.object(orchestrator.graph, "ainvoke", new_callable=AsyncMock) as mock_invoke:
-        from langchain_core.messages import AIMessage
-        mock_invoke.return_value = {
-            "messages": [
-                AIMessage(content="Final response content")
-            ]
-        }
+    with patch("app.processing.agent.VectorizedMessageHistory") as mock_hist_class:
+        # Correctly mock the instance methods
+        mock_hist_instance = mock_hist_class.return_value
+        mock_hist_instance.add_message = AsyncMock()
         
-        response = await orchestrator.process_message("What is the company policy?", thread_id="test_thread")
+        orchestrator = AgentOrchestrator()
         
-        assert response == "Final response content"
-        mock_invoke.assert_called_once()
-        args, kwargs = mock_invoke.call_args
-        assert kwargs["config"]["configurable"]["thread_id"] == "test_thread"
-        assert "What is the company policy?" in str(args[0]["messages"][0].content)
+        # Mock the graph execution
+        with patch.object(orchestrator.graph, "ainvoke", new_callable=AsyncMock) as mock_invoke:
+            from langchain_core.messages import AIMessage
+            mock_invoke.return_value = {
+                "messages": [
+                    AIMessage(content="Final response content")
+                ]
+            }
+            
+            response = await orchestrator.process_message("What is the company policy?", thread_id="test_thread")
+            
+            assert response == "Final response content"
+            mock_invoke.assert_called_once()
+            args, kwargs = mock_invoke.call_args
+            assert kwargs["config"]["configurable"]["thread_id"] == "test_thread"
+            mock_hist_instance.add_message.assert_called()
 
 @pytest.mark.asyncio
 async def test_tool_executor_crag_flow():

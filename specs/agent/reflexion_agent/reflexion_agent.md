@@ -148,9 +148,9 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ### [PHASE 4] Gestão de Memória (Curto e Longo Prazo)
 
-- [ ] [TASK-4.1] Implementar `ConversationBufferMemory` com ChromaDB para histórico de mensagens.
-- [ ] [TASK-4.2] Configurar `InMemoryStore` para memória de longo prazo (cross-sessões).
-- [ ] [TASK-4.3] Implementar busca semântica (`store.search()`) com embeddings na memória de longo prazo.
+- [x] [TASK-4.1] Implementar `ConversationBufferMemory` com ChromaDB para histórico de mensagens.
+- [x] [TASK-4.2] Configurar `InMemoryStore` para memória de longo prazo (cross-sessões).
+- [x] [TASK-4.3] Implementar busca semântica (`store.search()`) com embeddings na memória de longo prazo.
 - [ ] [TASK-4.4] Migrar de `InMemoryStore` para `PostgresStore` para persistência em produção.
 - [ ] [TASK-4.5] **Suíte de Testes de Memória**:
   - Validar persistência e recuperação do histórico no ChromaDB.
