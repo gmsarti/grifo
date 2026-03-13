@@ -123,15 +123,15 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ### [PHASE 0] Setup e Ambiente
 
-- [ ] [TASK-0.1] Configurar `.env` com `OPENAI_API_KEY`, `TAVILY_API_KEY` e `LANGSMITH_API_KEY`.
-- [ ] [TASK-0.2] Validar instâncias de `Settings` em `app/core/config.py`.
-- [ ] [TASK-0.3] Instalar dependências: `langgraph`, `langchain-tavily`, `langchain-openai`.
+- [x] [TASK-0.1] Configurar `.env` com `OPENAI_API_KEY`, `TAVILY_API_KEY` e `LANGSMITH_API_KEY`.
+- [x] [TASK-0.2] Validar instâncias de `Settings` em `app/core/config.py`.
+- [x] [TASK-0.3] Instalar dependências: `langgraph`, `langchain-tavily`, `langchain-openai`.
 
 ### [PHASE 1] Estrutura e Schemas
 
-- [ ] [TASK-1.1] Implementar schemas Pydantic (`Reflection`, `AnswerQuestion`, `ReviseAnswer`) em `schemas.py`.
-- [ ] [TASK-1.2] Definir o `MessagesState` e a estrutura básica do grafo no LangGraph.
-- [ ] [TASK-1.3] Criar os templates de prompt base em `chains.py` usando `partial`.
+- [x] [TASK-1.1] Implementar schemas Pydantic (`Reflection`, `AnswerQuestion`, `ReviseAnswer`) em `schemas.py`.
+- [x] [TASK-1.2] Definir o `MessagesState` e a estrutura básica do grafo no LangGraph.
+- [X] [TASK-1.3] Criar os templates de prompt base em `chains.py` usando `partial`.
 
 ### [PHASE 2] Ferramentas e Chains
 

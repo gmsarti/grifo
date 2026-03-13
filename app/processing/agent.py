@@ -1,58 +1,79 @@
-from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent  # Nova importação
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from typing import Literal
+from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
+from langgraph.graph import END, START, StateGraph, MessagesState
+from langgraph.prebuilt import ToolNode
 from app.core.config import settings
+from app.core.llm import get_reasoner, get_fast_model
 from app.processing.tools import AGENT_TOOLS
+from app.processing.chains import get_first_responder, get_revisor
+
+# Plan for MAX_ITERATIONS from config or default
+MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
 
 
 class AgentOrchestrator:
     """
-    Processing Layer: O "Cérebro" da aplicação.
-    Orquestra o LLM e as ferramentas, independente da API ou da UI.
+    Orchestrates the Reflexion Agent graph using specialized LLM profiles.
     """
 
     def __init__(self):
-        self.llm = self._initialize_llm()
+        self.fast_llm = get_fast_model()
+        self.reasoner_llm = get_reasoner()
         self.tools = AGENT_TOOLS
-        self.agent = self._create_agent()  # Atribui diretamente
 
+        # Initialize chains
+        self.first_responder = get_first_responder(self.fast_llm)
+        self.revisor = get_revisor(self.reasoner_llm)
 
-    def _initialize_llm(self):
-        """Inicializa o modelo baseando-se nas configurações (DeepSeek ou OpenAI)."""
-        if settings.MODEL_PROVIDER == "deepseek":
-            return ChatOpenAI(
-                model=settings.MODEL_NAME,
-                api_key=settings.DEEPSEEK_API_KEY,
-                base_url="https://api.deepseek.com/v1",
-                max_tokens=1024,
-            )
-        # Default para OpenAI
-        return ChatOpenAI(
-            model=settings.MODEL_NAME, api_key=settings.OPENAI_API_KEY, temperature=0.2
+        self.graph = self._create_graph()
+
+    def _create_graph(self):
+        """Creates the LangGraph for the Reflexion Agent."""
+        builder = StateGraph(MessagesState)
+
+        # Add nodes
+        builder.add_node("draft", self.draft_node)
+        builder.add_node("execute_tools", ToolNode(self.tools))
+        builder.add_node("revise", self.revise_node)
+
+        # Define edges
+        builder.add_edge(START, "draft")
+        builder.add_edge("draft", "execute_tools")
+        builder.add_edge("execute_tools", "revise")
+        builder.add_conditional_edges("revise", self.event_loop, ["execute_tools", END])
+
+        return builder.compile()
+
+    async def draft_node(self, state: MessagesState):
+        """Node for the initial draft using the FAST model."""
+        response = await self.first_responder.ainvoke({"messages": state["messages"]})
+        return {"messages": [response]}
+
+    async def revise_node(self, state: MessagesState):
+        """Node for revising the answer using the REASONER model."""
+        response = await self.revisor.ainvoke({"messages": state["messages"]})
+        return {"messages": [response]}
+
+    def event_loop(self, state: MessagesState) -> Literal["execute_tools", "__end__"]:
+        """Controls the iteration cycle based on tool visits."""
+        count_tool_visits = sum(
+            isinstance(item, ToolMessage) for item in state["messages"]
         )
+        if count_tool_visits >= MAX_ITERATIONS:
+            return END
+        return "execute_tools"
 
-    def _create_agent(self):
-        """Cria o agente LangChain moderno com tool calling."""
-        system_prompt = "És um assistente corporativo inteligente. Utiliza as tuas ferramentas para procurar informação antes de responder."
-
-        # Cria agente diretamente (CompiledStateGraph)
-        agent = create_agent(
-            model=self.llm,
-            tools=self.tools,
-            system_prompt=system_prompt,
-        )
-        return agent
-
-    async def process_message(self, message: str) -> str:
-        """Processa a mensagem do utilizador e devolve a resposta do agente."""
+    async def process_message(self, message: str, thread_id: str = None) -> str:
+        """Processes a user message through the graph."""
+        config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
+        inputs = {"messages": [HumanMessage(content=message)]}
         try:
-            # O CompiledStateGraph do create_agent espera um dicionário com 'messages'
-            inputs = {"messages": [{"role": "user", "content": message}]}
-            result = await self.agent.ainvoke(inputs)
-            
-            # O resultado costuma ser o estado final, pegamos a última mensagem
+            result = await self.graph.ainvoke(inputs, config=config)
             if "messages" in result and len(result["messages"]) > 0:
-                return result["messages"][-1].content
-            return "Não foi possível gerar uma resposta."
+                # Return the content of the last AI message
+                for msg in reversed(result["messages"]):
+                    if isinstance(msg, AIMessage) and msg.content:
+                        return msg.content
+            return "No response generated."
         except Exception as e:
-            return f"Ocorreu um erro ao processar o raciocínio: {str(e)}"
+            return f"Error processing message: {str(e)}"
