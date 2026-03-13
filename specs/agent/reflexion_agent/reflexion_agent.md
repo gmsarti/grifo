@@ -135,9 +135,9 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 
 ### [PHASE 2] Ferramentas e Chains
 
-- [ ] [TASK-2.1] Configurar `TavilySearch` e criar o `ToolNode` em `tool_executor.py`.
-- [ ] [TASK-2.2] Implementar `first_responder` chain com bind de `AnswerQuestion`.
-- [ ] [TASK-2.3] Implementar `revisor` chain com bind de `ReviseAnswer`.
+- [x] [TASK-2.1] Configurar `TavilySearch` e criar o `ToolNode` em `tool_executor.py`.
+- [x] [TASK-2.2] Implementar `first_responder` chain com bind de `AnswerQuestion`.
+- [x] [TASK-2.3] Implementar `revisor` chain com bind de `ReviseAnswer`.
 
 ### [PHASE 3] Grafo e Orquestração
 

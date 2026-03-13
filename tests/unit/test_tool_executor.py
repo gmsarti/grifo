@@ -25,6 +25,6 @@ def test_run_queries_calls_tavily_batch():
 def test_execute_tools_is_valid_tool_node():
     assert isinstance(execute_tools, ToolNode)
     # Check that tools are present by name
-    tool_names = [tool.name for tool in execute_tools.tools]
+    tool_names = list(execute_tools.tools_by_name.keys())
     assert "AnswerQuestion" in tool_names
     assert "ReviseAnswer" in tool_names
