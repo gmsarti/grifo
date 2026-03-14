@@ -17,11 +17,12 @@ def retrieve(state: GraphState) -> Dict[str, Any]:
     Retrieve documents from vectorstore
     """
     question = state["question"]
-    metadata = {"question": question}
+    project_id = state.get("project_id", "default")
+    metadata = {"question": question, "project_id": project_id}
     
     with timed_process("RAG Retrieve", logger, metadata=metadata):
-        # Retrieval
-        manager = VectorStoreManager()
+        # Retrieval (Project-scoped)
+        manager = VectorStoreManager(project_id=project_id)
         documents = manager.search(query=question, search_type="hybrid", k=3)
     
     return {"documents": documents, "question": question}

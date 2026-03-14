@@ -8,11 +8,11 @@ class AgenticRAGController:
     def __init__(self):
         self.app = create_rag_graph()
 
-    async def invoke(self, question: str) -> str:
+    async def invoke(self, question: str, project_id: str = "default") -> str:
         """
-        Runs the full CRAG workflow for a given question.
+        Runs the full CRAG workflow for a given question and project.
         Returns the final generated answer.
         """
-        inputs = {"question": question}
+        inputs = {"question": question, "project_id": project_id}
         result = await self.app.ainvoke(inputs)
         return result.get("generation", "Sorry, I couldn't find an answer.")

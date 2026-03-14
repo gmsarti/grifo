@@ -15,12 +15,15 @@ def get_company_knowledge(query: str) -> str:
     """
     Útil para procurar informações em documentos internos, manuais e base de conhecimento da empresa.
     Esta ferramenta utiliza Corrective RAG (CRAG) com validação de documentos e busca web como fallback.
+    O contexto de busca é isolado por Projeto e Sessão.
     Introduza a sua pergunta como texto (query).
     """
-    # Como o controlador é assíncrono e a ferramenta espera síncrono (ou o LangChain gerencia):
-    # Usamos asyncio.run para simplificar a ponte se necessário, 
-    # ou deixamos o LangChain lidar com a corotina se registrado corretamente.
-    return asyncio.run(rag_controller.invoke(query))
+    from app.core.logging import log_context
+    context = log_context.get()
+    project_id = context.get("project_id", "default")
+    
+    # Executa o controlador dentro do contexto do projeto
+    return asyncio.run(rag_controller.invoke(query, project_id=project_id))
 
 
 @tool

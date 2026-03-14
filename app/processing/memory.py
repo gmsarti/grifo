@@ -10,12 +10,13 @@ class VectorizedMessageHistory:
     Short-term (Conversational) Memory:
     Stores and retrieves relevant message context from the current thread using ChromaDB.
     """
-    def __init__(self, thread_id: str):
+    def __init__(self, project_id: str, thread_id: str):
+        self.project_id = project_id
         self.thread_id = thread_id
         self.embeddings = OpenAIEmbeddings(api_key=settings.OPENAI_API_KEY)
         self.vector_store = Chroma(
-            collection_name=f"history_{thread_id}",
-            persist_directory=f"{settings.CHROMA_PERSIST_DIRECTORY}/history",
+            collection_name=f"history_{project_id}_{thread_id}",
+            persist_directory=f"{settings.CHROMA_PERSIST_DIRECTORY}/history/{project_id}",
             embedding_function=self.embeddings
         )
 

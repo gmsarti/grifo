@@ -73,11 +73,11 @@ class AgentOrchestrator:
         
         last_message = state["messages"][-1].content if state["messages"] else ""
         
-        with timed_process("Memory Retrieval", logger, metadata={"thread_id": thread_id, "user_id": user_id, "project_id": project_id}):
+        with timed_process("Memory Retrieval", logger):
             context_parts = []
             
-            # 1. Short-term Vectorized History
-            history_db = VectorizedMessageHistory(thread_id)
+            # 1. Short-term Vectorized History (Scoped by project)
+            history_db = VectorizedMessageHistory(project_id, thread_id)
             hist_context = history_db.search_history(last_message)
             if hist_context:
                 context_parts.append(f"Relevant Conversation History:\n{hist_context}")
@@ -120,11 +120,8 @@ class AgentOrchestrator:
             return END
         return "execute_tools"
 
-    async def process_message(self, message: str, thread_id: str = None, user_id: str = None, project_id: str = None) -> str:
+    async def process_message(self, message: str, thread_id: str, project_id: str, user_id: str = "default_user") -> str:
         """Processes a user message through the graph with monitoring."""
-        thread_id = thread_id or "default"
-        user_id = user_id or "default_user"
-        project_id = project_id or "default_project"
         
         config = {
             "configurable": {
@@ -141,19 +138,22 @@ class AgentOrchestrator:
         
         inputs = {"messages": [HumanMessage(content=message)]}
         
-        # Update short-term history
-        history_db = VectorizedMessageHistory(thread_id)
-        await history_db.add_message(inputs["messages"][0])
-        
-        try:
-            with get_openai_callback() as cb:
-                with timed_process("Graph Execution", logger, metadata=config["metadata"]):
-                    result = await self.graph.ainvoke(inputs, config=config)
+        # 0. Set Log Context for automatic enrichment
+        from app.core.logging import set_log_context
+        with set_log_context(user_id=user_id, project_id=project_id, thread_id=thread_id):
+            
+            # 1. Update short-term history (scoped by project)
+            history_db = VectorizedMessageHistory(project_id, thread_id)
+            await history_db.add_message(inputs["messages"][0])
+            
+            try:
+                with get_openai_callback() as cb:
+                    with timed_process("Graph Execution", logger):
+                        result = await self.graph.ainvoke(inputs, config=config)
                 
                 logger.info(
                     "Token usage and tokens details", 
                     extra={
-                        "metadata": config["metadata"],
                         "tokens": {
                             "total_tokens": cb.total_tokens,
                             "prompt_tokens": cb.prompt_tokens,
@@ -163,19 +163,19 @@ class AgentOrchestrator:
                     }
                 )
             
-            # Extract final AI Message and update history
-            if "messages" in result and len(result["messages"]) > 0:
-                final_ai_msg = None
-                for msg in reversed(result["messages"]):
-                    if isinstance(msg, AIMessage) and msg.content:
-                        final_ai_msg = msg
-                        break
-                
-                if final_ai_msg:
-                    await history_db.add_message(final_ai_msg)
-                    return final_ai_msg.content
+                # Extract final AI Message and update history
+                if "messages" in result and len(result["messages"]) > 0:
+                    final_ai_msg = None
+                    for msg in reversed(result["messages"]):
+                        if isinstance(msg, AIMessage) and msg.content:
+                            final_ai_msg = msg
+                            break
                     
-            return "No response generated."
-        except Exception as e:
-            logger.error(f"Error processing message: {str(e)}", extra={"metadata": config["metadata"]})
-            return f"Error processing message: {str(e)}"
+                    if final_ai_msg:
+                        await history_db.add_message(final_ai_msg)
+                        return final_ai_msg.content
+                        
+                return "No response generated."
+            except Exception as e:
+                logger.error(f"Error processing message: {str(e)}")
+                return f"Error processing message: {str(e)}"

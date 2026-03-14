@@ -56,10 +56,12 @@ class VectorStoreManager:
     Data Source Layer: Responsável pela ligação ao ChromaDB (RAG) e Ingestão.
     """
 
-    def __init__(self):
+    def __init__(self, project_id: str = "default"):
+        self.project_id = project_id
         self.embeddings = OpenAIEmbeddings(api_key=settings.OPENAI_API_KEY)
         self.vector_store = Chroma(
-            persist_directory=settings.CHROMA_PERSIST_DIRECTORY,
+            collection_name=f"project_{project_id}",
+            persist_directory=f"{settings.CHROMA_PERSIST_DIRECTORY}/{project_id}",
             embedding_function=self.embeddings,
         )
         self.file_service = FileIngestionService()
