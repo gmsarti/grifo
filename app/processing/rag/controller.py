@@ -8,11 +8,14 @@ class AgenticRAGController:
     def __init__(self):
         self.app = create_rag_graph()
 
-    async def invoke(self, question: str, project_id: str = "default") -> str:
+    async def invoke(self, question: str, project_id: str = "default") -> dict:
         """
         Runs the full CRAG workflow for a given question and project.
-        Returns the final generated answer.
+        Returns a dictionary with 'generation' and 'documents'.
         """
         inputs = {"question": question, "project_id": project_id}
         result = await self.app.ainvoke(inputs)
-        return result.get("generation", "Sorry, I couldn't find an answer.")
+        return {
+            "generation": result.get("generation", "Sorry, I couldn't find an answer."),
+            "documents": result.get("documents", [])
+        }

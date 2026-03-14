@@ -3,6 +3,7 @@ from app.data_source.vector_store import VectorStoreManager
 from app.data_source.mcp_client import MCPConnector
 from app.processing.rag.controller import AgenticRAGController
 import asyncio
+import json
 
 # Instanciamos os conectores da Camada de Dados e Controladores
 vector_db = VectorStoreManager()
@@ -23,7 +24,8 @@ def get_company_knowledge(query: str) -> str:
     project_id = context.get("project_id", "default")
     
     # Executa o controlador dentro do contexto do projeto
-    return asyncio.run(rag_controller.invoke(query, project_id=project_id))
+    res = asyncio.run(rag_controller.invoke(query, project_id=project_id))
+    return json.dumps(res)
 
 
 @tool

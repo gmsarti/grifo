@@ -173,9 +173,43 @@ class AgentOrchestrator:
                     
                     if final_ai_msg:
                         await history_db.add_message(final_ai_msg)
-                        return final_ai_msg.content
                         
-                return "No response generated."
+                        # Extract grounding metadata from ToolMessages
+                        grounding = {"local_sources": [], "web_sources": [], "search_queries": []}
+                        import json
+                        for msg in result["messages"]:
+                            if isinstance(msg, ToolMessage):
+                                try:
+                                    tool_res = json.loads(msg.content)
+                                    if isinstance(tool_res, dict):
+                                        docs = tool_res.get("documents", [])
+                                        for d in docs:
+                                            source = d.get("metadata", {}).get("source", "unknown")
+                                            if source == "web_search" or source.startswith("http"):
+                                                grounding["web_sources"].append(source)
+                                            else:
+                                                grounding["local_sources"].append(source)
+                                    if "query" in tool_res:
+                                        grounding["search_queries"].append(tool_res["query"])
+                                except (json.JSONDecodeError, TypeError):
+                                    continue
+                        
+                        return {
+                            "response": final_ai_msg.content,
+                            "project_id": project_id,
+                            "thread_id": thread_id,
+                            "iterations": sum(1 for m in result["messages"] if isinstance(m, ToolMessage)),
+                            "grounding_metadata": grounding,
+                            "usage": {
+                                "total_tokens": cb.total_tokens,
+                                "prompt_tokens": cb.prompt_tokens,
+                                "completion_tokens": cb.completion_tokens,
+                                "total_cost": cb.total_cost,
+                            },
+                            "process_trace": [m.name if hasattr(m, "name") and m.name else "msg" for m in result["messages"]]
+                        }
+                        
+                return {"response": "No response generated."}
             except Exception as e:
                 logger.error(f"Error processing message: {str(e)}")
-                return f"Error processing message: {str(e)}"
+                return {"error": str(e)}

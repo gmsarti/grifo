@@ -119,6 +119,13 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 - **Objetivo:** Persistir fatos, preferências do usuário e aprendizados do agente entre diferentes sessões.
 - **Busca:** Utiliza `store.search()` com embeddings para busca semântica de fatos relevantes ao contexto atual.
 
+### 3. Loop de Aprendizado (Self-Learning)
+
+O agente evolui através da auto-reflexão pós-conversa:
+- **Extração de Fatos:** Uma chain especializada analisa cada turno da conversa para identificar informações perenes (ex: cargo, tecnologias preferidas, estilo de escrita).
+- **Consolidação:** Os fatos extraídos são salvos no `StoreMemoryManager` com namespaces hierárquicos `["memories", user_id, thread_id]`.
+- **Evolução:** Em conversas futuras, o agente consulta esses fatos para personalizar a resposta sem que o usuário precise repetir informações.
+
 ## Lista de Tasks (Backlog Detalhado)
 
 ### [PHASE 0] Setup e Ambiente
@@ -175,6 +182,13 @@ O agente diferencia entre memória de curto prazo (dentro da sessão) e memória
 - [ ] [TASK-5.5] **Dataset de Regressão (Golden Dataset)**:
   - Criar conjunto de 10 perguntas complexas com "gabaritos" de pontos críticos que a reflexão DEVE abordar.
   - Automatizar execução do benchmark para garantir que melhorias no prompt não causem regressão.
+
+### [PHASE 6] Aprendizado e Extração de Conhecimento
+
+- [ ] [TASK-6.1] Implementar `KnowledgeExtractor` chain para destilar fatos do histórico.
+- [ ] [TASK-6.2] Adicionar nó `reflection_learning` ao grafo (execução assíncrona pós-resposta).
+- [ ] [TASK-6.3] Implementar lógica de resolução de conflitos (ex: novo fato contradiz fato antigo).
+- [ ] [TASK-6.4] Testar ciclo completo de aprendizado entre múltiplas threads.
 
 ---
 

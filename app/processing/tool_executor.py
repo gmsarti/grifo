@@ -10,7 +10,7 @@ from app.data_source.vector_store import VectorStoreManager
 vector_db = VectorStoreManager()
 tavily_kwargs = {"max_results": 3}
 if settings.TAVILY_API_KEY:
-    tavily_kwargs["api_key"] = settings.TAVILY_API_KEY
+    tavily_kwargs["tavily_api_key"] = settings.TAVILY_API_KEY
 tavily_tool = TavilySearch(**tavily_kwargs)
 
 # Grader LLM

@@ -12,7 +12,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-def populate_from_directory(directory_path: str):
+def populate_from_directory(directory_path: str, project_id: str = "default"):
     """
     Reads all supported files from the directory and ingests them into the vector store.
     """
@@ -21,7 +21,7 @@ def populate_from_directory(directory_path: str):
         logger.error(f"Directory not found: {directory_path}")
         return
 
-    manager = VectorStoreManager()
+    manager = VectorStoreManager(project_id=project_id)
     
     # Supported extensions based on loaders.py
     extensions = {'.pdf', '.docx', '.csv', '.txt', '.md'}
@@ -32,17 +32,17 @@ def populate_from_directory(directory_path: str):
         logger.warning(f"No valid files found in {directory_path}")
         return
 
-    logger.info(f"Starting ingestion of {len(files_to_process)} files from {directory_path}...")
+    logger.info(f"Iniciando ingestão de {len(files_to_process)} arquivos para o projeto '{project_id}' a partir de {directory_path}...")
     
     for file_path in files_to_process:
         try:
-            logger.info(f"Processing: {file_path.name}")
+            logger.info(f"Processando: {file_path.name}")
             manager.ingest_file(str(file_path))
-            logger.info(f"Successfully ingested: {file_path.name}")
+            logger.info(f"Ingestão concluída: {file_path.name}")
         except Exception as e:
-            logger.error(f"Failed to ingest {file_path.name}: {str(e)}")
+            logger.error(f"Falha ao ingerir {file_path.name}: {str(e)}")
 
-    logger.info("Population process completed.")
+    logger.info("Processo de população finalizado.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Populate vector store from a directory of files.")
@@ -52,8 +52,14 @@ if __name__ == "__main__":
         default="pdfs_to_test_ingestion",
         help="Directory containing files to ingest (default: pdfs_to_test_ingestion)"
     )
+    parser.add_argument(
+        "--project-id",
+        type=str,
+        default="rpg-project",
+        help="Target project ID (default: rpg-project)"
+    )
     
     args = parser.parse_args()
     
     # Run the population
-    populate_from_directory(args.dir)
+    populate_from_directory(args.dir, project_id=args.project_id)

@@ -138,8 +138,7 @@ class VectorStoreManager:
         Retorna uma lista de metadados únicos baseados na chave 'source'.
         """
         try:
-            # Obtemos todos os metadados da coleção
-            # Nota: O Chroma permite filtrar ou pedir apenas 'metadatas'
+            # Obtemos metadados da coleção
             res = self.vector_store.get(include=["metadatas"])
             metadatas = res.get("metadatas", [])
             
@@ -149,6 +148,8 @@ class VectorStoreManager:
                 source = meta.get("source", "unknown")
                 if source not in unique_sources:
                     unique_sources[source] = {
+                        "doc_id": source, # Usamos o source como ID lógico único
+                        "name": Path(source).name if not source.startswith("http") else source,
                         "source": source,
                         "type": "url" if source.startswith("http") else "file"
                     }
@@ -156,3 +157,17 @@ class VectorStoreManager:
             return list(unique_sources.values())
         except Exception:
             return []
+
+    def delete_document(self, doc_id: str):
+        """
+        Remove todos os chunks associados a um doc_id (source).
+        """
+        # No Chroma via LangChain, podemos deletar usando filtros de metadados
+        self.vector_store.delete(where={"source": doc_id})
+        
+        # Opcional: Atualizar BM25 e total de documentos se necessário
+        # Por simplicidade, assumimos que o BM25 será recriado na próxima adição
+        self._all_documents = [d for d in self._all_documents if d.metadata.get("source") != doc_id]
+        if not self._all_documents:
+            self.bm25_retriever = None
+            self.hybrid_retriever = None
