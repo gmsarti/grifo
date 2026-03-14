@@ -1,19 +1,26 @@
 from langchain.tools import tool
 from app.data_source.vector_store import VectorStoreManager
 from app.data_source.mcp_client import MCPConnector
+from app.processing.rag.controller import AgenticRAGController
+import asyncio
 
-# Instanciamos os conectores da Camada de Dados
+# Instanciamos os conectores da Camada de Dados e Controladores
 vector_db = VectorStoreManager()
 mcp_client = MCPConnector()
+rag_controller = AgenticRAGController()
 
 
 @tool
 def get_company_knowledge(query: str) -> str:
     """
     Útil para procurar informações em documentos internos, manuais e base de conhecimento da empresa.
+    Esta ferramenta utiliza Corrective RAG (CRAG) com validação de documentos e busca web como fallback.
     Introduza a sua pergunta como texto (query).
     """
-    return vector_db.search_context(query)
+    # Como o controlador é assíncrono e a ferramenta espera síncrono (ou o LangChain gerencia):
+    # Usamos asyncio.run para simplificar a ponte se necessário, 
+    # ou deixamos o LangChain lidar com a corotina se registrado corretamente.
+    return asyncio.run(rag_controller.invoke(query))
 
 
 @tool
