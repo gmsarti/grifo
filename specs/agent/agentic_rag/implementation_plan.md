@@ -1,33 +1,42 @@
-# Implementation Plan - Reflexion Agent Replication Documentation
+# Implementation Plan - Agentic RAG (Corrective RAG)
 
-This plan outlines the creation of a comprehensive specification document and implementation guide to replicate the `reflexion_agent` in a new repository, following Specs Driven Development (SDD) principles.
+This plan outlines the implementation of the Agentic RAG (CRAG) system, integrated as a specialized tool for the Reflexion Agent.
 
-## Proposed Changes
+## Architecture Rationale
 
-### Documentation Artifacts
+### Agentic RAG as a Tool
+The `Reflexion Agent` (orchestrator) uses the `Agentic RAG` as a tool. This allows the orchestrator to delegate factual queries to a system that knows how to validate documents and perform web search fallbacks.
 
-#### [NEW] [reflexion_agent_spec.md](file:///home/gusarti/.gemini/antigravity/brain/f3a89701-dc0d-42eb-8a91-63c0b4e7ceb8/reflexion_agent_spec.md)
-This file will serve as the "Source of Truth" for the replication. It will include:
-- **Product Definition**: Purpose and scope of the Reflexion Agent.
-- **Architecture & System Design**: Mermaid diagrams of the LangGraph workflow, explanation of the nodes (`draft`, `execute_tools`, `revise`), and the critique loop.
-- **Functional Requirements**: Details on the prompts (`actor_prompt`, `revise_instructions`), state management (`MessagesState`), and tool integration (`TavilySearch`).
-- **Technical Specifications**: Pydantic schemas (`AnswerQuestion`, `ReviseAnswer`, `Reflection`), dependencies (`langchain`, `langgraph`, `openai`, `tavily`).
-- **Implementation Backlog**: A categorized list of tasks (Setup, Schemas, Chains, Graph, Testing) that can be directly used as a roadmap.
+### Layered Organization
+- **Data Source (`/app/data_source`)**: Handles mechanics (ChromaDB, Loaders, Hybrid Search).
+- **Processing (`/app/processing/rag/`)**: Handles intelligence and orchestration (Graphs, LLM Chains, Decision Nodes). This keeps the code modular and follows DDD/SDD principles.
 
-## RAG Agentic Replication Documentation
+## Implementation Backlog
 
-### [NEW] [rag_agentic_spec.md](file:///home/gusarti/.gemini/antigravity/brain/f3a89701-dc0d-42eb-8a91-63c0b4e7ceb8/rag_agentic_spec.md)
-This file will document the "Corrective RAG" pattern identified in the codebase.
-- **Architecture**: A pipeline involving Retrieval, Grading, and a conditional Web Search (implied by `web_search` in state).
-- **Core Components**: Ingestion (ChromaDB + WebBaseLoader), Retrieval Grader (Binary classification).
-- **Data Flow**: `GraphState` management.
-- **Implementation Backlog**: Steps to complete the graph (currently empty) and unify the components.
+### [PHASE 1] Ingestão e Vector Store
+- [x] [TASK-1.1] Implementar `WebIngestionService` no `loaders.py`.
+- [x] [TASK-1.2] Configurar `Chroma` e `OpenAIEmbeddings` com busca híbrida (Vector + BM25) no `vector_store.py`.
+- [x] [TASK-1.3] Criar script utilitário `scripts/populate_db.py` para popular o vector store.
 
-### [NEW] [rag_agentic_replication_guide.md](file:///home/gusarti/.gemini/antigravity/brain/f3a89701-dc0d-42eb-8a91-63c0b4e7ceb8/rag_agentic_replication_guide.md)
-Step-by-step instructions to set up the RAG infrastructure.
+### [PHASE 2] Infraestrutura do Grafo (app/processing/rag/)
+- [x] [TASK-2.1] Criar `app/processing/rag/state.py` com o `GraphState` (question, generation, web_search, documents).
+- [x] [TASK-2.2] Implementar chains auxiliares em `app/processing/rag/chains.py`:
+    - `retrieval_grader`: LLM com structured output para validar relevância.
+    - `rag_generation`: Chain para resposta final baseada no contexto.
+    - `question_rewriter`: Para otimizar a busca web caso necessário.
 
-## Verification Plan
+### [PHASE 3] Implementação dos Nós (app/processing/rag/nodes.py)
+- [ ] [TASK-3.1] Nó `retrieve`: Busca top-3 documentos usando o `HybridRetriever`.
+- [ ] [TASK-3.2] Nó `grade_documents`: Filtra documentos irrelevantes e define se `web_search` é necessário.
+- [ ] [TASK-3.3] Nó `web_search`: Integração com Tavily para busca complementar.
+- [ ] [TASK-3.4] Nó `generate`: Gera a resposta usando os documentos validados.
 
-### Manual Verification
-- Verify that the `rag_agentic_spec.md` accurately reflects the `retrieval_grader` logic and the `ingestion.py` setup.
-- Ensure the backlog provides a clear path to finishing the `graph.py` implementation.
+### [PHASE 4] Orquestração e Integração
+- [ ] [TASK-4.1] Configurar `StateGraph` em `app/processing/rag/graph.py` com arestas condicionais.
+- [ ] [TASK-4.2] Criar `app/processing/rag/controller.py` para expor o fluxo como uma interface unificada.
+- [ ] [TASK-4.3] Registrar o `Agentic RAG` como ferramenta no `app/processing/tools.py`.
+
+### [PHASE 5] Verificação e Observabilidade
+- [x] [TASK-5.1] Testes unitários para o `retrieval_grader` em `tests/unit/test_rag_grader.py`.
+- [ ] [TASK-5.2] Teste de integração do fluxo completo (CRAG tool call).
+- [ ] [TASK-5.3] Monitoramento via LangSmith das etapas de filtragem e recuperação.
