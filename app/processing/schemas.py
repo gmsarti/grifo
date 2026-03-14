@@ -25,3 +25,20 @@ class ReviseAnswer(AnswerQuestion):
     references: List[str] = Field(
         description="References to the sources used to answer the question"
     )
+
+class ExtractedFact(BaseModel):
+    fact: str = Field(
+        description="Fato claro, conciso e autossuficiente extraído da conversa (ex: 'O usuário prefere respostas curtas')."
+    )
+    topic: str = Field(
+        description="Tópico geral do fato (ex: 'Preferência do Usuário', 'Detalhes do Projeto', 'Tecnologias')."
+    )
+
+
+class KnowledgeExtraction(BaseModel):
+    """Extração de fatos e conhecimentos úteis da conversa para armazenamento de longo prazo."""
+    
+    facts: List[ExtractedFact] = Field(
+        default_factory=list, 
+        description="Lista de fatos extraídos. Retorne uma lista vazia se não houver nada útil ou novo para lembrar."
+    )

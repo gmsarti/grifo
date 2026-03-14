@@ -108,7 +108,7 @@ class StoreMemoryManager:
         """
         # namespaces are lists of strings
         return await self.store.asearch(
-            namespace=["memories", user_id],
+            ["memories", user_id],  # positional namespace (lista)
             query=query,
             limit=limit
         )

@@ -1,5 +1,6 @@
 from app.processing.agent import AgentOrchestrator
 from langgraph.graph import END
+from langchain_core.messages import HumanMessage, AIMessage
 
 
 def test_graph_structure():
@@ -26,19 +27,18 @@ def test_graph_structure():
 
 
 def test_event_loop_logic():
+    """Testa lógica do event_loop isoladamente."""
     orchestrator = AgentOrchestrator()
-    from langchain_core.messages import ToolMessage, AIMessage
-
-    # Mock state with 0 tool visits
-    state = {"messages": [AIMessage(content="[FAST] test")]}
-    assert orchestrator.event_loop(state) == "execute_tools"
-
-    # Mock state with MAX_ITERATIONS (2) tool visits
-    state = {
-        "messages": [
-            ToolMessage(content="r1", tool_call_id="1"),
-            ToolMessage(content="r2", tool_call_id="2"),
-        ]
+    
+    # Sem tool_calls
+    state_no_tools = {"messages": [HumanMessage(content="no tools")]}
+    assert orchestrator.event_loop(state_no_tools) == "execute_tools"
+    
+    # Com tool_calls = MAX_ITERATIONS (formato correto)
+    CORRECT_TOOL_CALL = {
+        "name": "test_tool", "args": {}, "id": "call_123", "type": "tool"
     }
-    # Since MAX_ITERATIONS = 2, it should return END when count >= 2
-    assert orchestrator.event_loop(state) == END
+    state_with_tools = {"messages": [
+        AIMessage(content="", tool_calls=[CORRECT_TOOL_CALL]) for _ in range(2)
+    ]}
+    assert orchestrator.event_loop(state_with_tools) == "extract_knowledge"

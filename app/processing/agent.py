@@ -1,3 +1,4 @@
+import uuid
 from typing import Literal, Optional
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage, BaseMessage
 from langgraph.graph import END, START, StateGraph, MessagesState
@@ -6,17 +7,30 @@ from langgraph.store.memory import InMemoryStore
 from app.core.config import settings
 from app.core.llm import get_reasoner, get_fast_model
 from app.processing.tools import AGENT_TOOLS
-from app.processing.chains import get_first_responder, get_revisor
-from app.processing.tool_executor import execute_tools as reflexion_tool_node
+from app.processing.chains import get_first_responder, get_revisor, get_knowledge_extractor
 from app.processing.memory import VectorizedMessageHistory, StoreMemoryManager
 from app.core.logging import get_logger, timed_process
 from langchain_community.callbacks.manager import get_openai_callback
+from langgraph.prebuilt import ToolNode
+from langchain_core.tools import tool
+from typing import List
+from langchain_core.runnables import RunnableConfig
+
 
 logger = get_logger(__name__)
 
 # Plan for MAX_ITERATIONS from config or default
 MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
 
+@tool
+def answer_question_tool(answer: str, reflection: dict, search_queries: List[str]):
+    """Tool para AnswerQuestion"""
+    return {"answer": answer, "reflection": reflection, "search_queries": search_queries}
+
+@tool  
+def revise_answer_tool(answer: str, reflection: dict, search_queries: List[str], references: List[str]):
+    """Tool para ReviseAnswer"""
+    return {"answer": answer, "reflection": reflection, "search_queries": search_queries, "references": references}
 
 class AgentOrchestrator:
     """
@@ -29,7 +43,7 @@ class AgentOrchestrator:
         self.fast_llm = get_fast_model()
         self.reasoner_llm = get_reasoner()
         self.tools = AGENT_TOOLS
-        self.reflexion_tools = reflexion_tool_node
+        self.reflexion_tools = ToolNode([answer_question_tool, revise_answer_tool])
         
         # Memory Components
         self.checkpointer = MemorySaver()
@@ -39,6 +53,7 @@ class AgentOrchestrator:
         # Initialize chains
         self.first_responder = get_first_responder(self.fast_llm)
         self.revisor = get_revisor(self.reasoner_llm)
+        self.knowledge_extractor = get_knowledge_extractor(self.fast_llm)
 
         self.graph = self._create_graph()
 
@@ -51,17 +66,21 @@ class AgentOrchestrator:
         builder.add_node("draft", self.draft_node)
         builder.add_node("execute_tools", self.reflexion_tools)
         builder.add_node("revise", self.revise_node)
+        builder.add_node("extract_knowledge", self.extract_knowledge_node)
 
         # Define edges
         builder.add_edge(START, "retrieve_memory")
         builder.add_edge("retrieve_memory", "draft")
         builder.add_edge("draft", "execute_tools")
         builder.add_edge("execute_tools", "revise")
-        builder.add_conditional_edges("revise", self.event_loop, ["execute_tools", END])
+        
+        # O ciclo de reflexão agora termina na extração de conhecimento ao invés de END
+        builder.add_conditional_edges("revise", self.event_loop, ["execute_tools", "extract_knowledge"])
+        builder.add_edge("extract_knowledge", END)
 
         return builder.compile(checkpointer=self.checkpointer, store=self.store)
 
-    async def retrieve_memory_node(self, state: MessagesState, config: dict):
+    async def retrieve_memory_node(self, state: MessagesState, config):
         """
         Retrieves relevant context from vectorized history and long-term store.
         (Timed process for observability)
@@ -99,26 +118,62 @@ class AgentOrchestrator:
         
         return {"messages": []}
 
-    async def draft_node(self, state: MessagesState):
+    async def draft_node(self, state: MessagesState, config=None):
         """Node for the initial draft using the FAST model."""
         with timed_process("Drafting Responder", logger):
             response = await self.first_responder.ainvoke({"messages": state["messages"]})
             return {"messages": [response]}
 
-    async def revise_node(self, state: MessagesState):
+    async def revise_node(self, state: MessagesState, config=None):
         """Node for revising the answer using the REASONER model."""
         with timed_process("Revision Process", logger):
             response = await self.revisor.ainvoke({"messages": state["messages"]})
             return {"messages": [response]}
 
-    def event_loop(self, state: MessagesState) -> Literal["execute_tools", "__end__"]:
+    async def extract_knowledge_node(self, state: MessagesState, config: RunnableConfig | None = None):
+        """
+        Node final que extrai fatos relevantes da interação atual e os
+        salva na memória de longo prazo (StoreMemoryManager).
+        """
+        configurable = config.get("configurable", {})
+        user_id = configurable.get("user_id", "default_user")
+        
+        with timed_process("Knowledge Extraction", logger):
+            # Obtém as últimas interações (usuário + reflexão + IA)
+            recent_messages = state["messages"][-6:]
+            history_lines = []
+            
+            for m in recent_messages:
+                if isinstance(m, HumanMessage):
+                    history_lines.append(f"Usuário: {m.content}")
+                elif isinstance(m, AIMessage) and m.content:
+                    history_lines.append(f"IA: {m.content}")
+            
+            history_str = "\n".join(history_lines)
+            
+            if history_str:
+                try:
+                    extraction = await self.knowledge_extractor.ainvoke({"history": history_str})
+                    if extraction and hasattr(extraction, 'facts') and extraction.facts:
+                        for item in extraction.facts:
+                            fact_key = f"fact_{uuid.uuid4().hex[:8]}"
+                            formatted_fact = f"[{item.topic}] {item.fact}"
+                            
+                            # Salva o aprendizado permanentemente no namespace do usuário
+                            await self.store_manager.save_fact(user_id, fact_key, formatted_fact)
+                            logger.info(f"Learned new fact for user {user_id}: {formatted_fact}")
+                except Exception as e:
+                    logger.error(f"Error extracting knowledge: {str(e)}")
+                    
+        return {"messages": []} # Não polui as mensagens da sessão principal
+
+    def event_loop(self, state: MessagesState) -> Literal["execute_tools", "extract_knowledge"]:
         """Controls the iteration cycle based on tool visits."""
-        count_tool_visits = sum(
-            isinstance(item, ToolMessage) for item in state["messages"]
+        tool_calls_count = sum(
+            1 for msg in state["messages"][-10:]  # Recent window
+            if isinstance(msg, AIMessage) and msg.tool_calls
         )
-        if count_tool_visits >= MAX_ITERATIONS:
-            return END
-        return "execute_tools"
+        return "extract_knowledge" if tool_calls_count >= MAX_ITERATIONS else "execute_tools"
 
     async def process_message(self, message: str, thread_id: str, project_id: str, user_id: str = "default_user") -> str:
         """Processes a user message through the graph with monitoring."""
@@ -167,7 +222,7 @@ class AgentOrchestrator:
                 if "messages" in result and len(result["messages"]) > 0:
                     final_ai_msg = None
                     for msg in reversed(result["messages"]):
-                        if isinstance(msg, AIMessage) and msg.content:
+                        if (isinstance(msg, AIMessage) or type(msg).__name__ == "AIMessage") and msg.content:
                             final_ai_msg = msg
                             break
                     

@@ -1,6 +1,7 @@
 import datetime
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from app.processing.schemas import AnswerQuestion, ReviseAnswer
+from app.processing.schemas import AnswerQuestion, ReviseAnswer, KnowledgeExtraction
+# from langchain_core.messages import ToolCallRequest
 
 
 def get_time():
@@ -38,7 +39,11 @@ def get_first_responder(llm):
     Binds the AnswerQuestion tool to the LLM.
     """
     prompt = actor_prompt_template.partial(first_instruction=DRAFT_INSTRUCTION)
-    return prompt | llm.bind_tools(tools=[AnswerQuestion], tool_choice="AnswerQuestion")
+    
+    return prompt | llm.bind_tools(
+        tools=[AnswerQuestion], 
+        tool_choice={"type": "function", "function": {"name": "AnswerQuestion"}}
+    )
 
 
 def get_revisor(llm):
@@ -47,4 +52,28 @@ def get_revisor(llm):
     Binds the ReviseAnswer tool to the LLM.
     """
     prompt = actor_prompt_template.partial(first_instruction=REVISE_INSTRUCTION)
-    return prompt | llm.bind_tools(tools=[ReviseAnswer], tool_choice="ReviseAnswer")
+    return prompt | llm.bind_tools(
+        tools=[ReviseAnswer], 
+        tool_choice={"type": "function", "function": {"name": "ReviseAnswer"}}
+    )
+
+
+def get_knowledge_extractor(llm):
+    """
+    Cria a chain responsável por extrair aprendizados da conversa.
+    Utiliza structured output para garantir o formato da resposta.
+    """
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system", 
+            """Você é um assistente especialista em extração de conhecimento.
+Analise o histórico recente da conversa e extraia fatos importantes, preferências do usuário ou detalhes de projetos que devem ser lembrados em interações futuras.
+Ignore informações triviais, saudações ou dados temporários.
+Extraia apenas afirmações claras, concisas e autossuficientes."""
+        ),
+        ("human", "Histórico da Conversa:\n{history}")
+    ])
+    
+    structured_llm = llm.with_structured_output(KnowledgeExtraction)
+    
+    return prompt | structured_llm
