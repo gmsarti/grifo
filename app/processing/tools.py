@@ -1,7 +1,7 @@
 from langchain.tools import tool
 from app.data_source.vector_store import VectorStoreManager
 from app.data_source.mcp_client import MCPConnector
-from app.processing.rag.controller import AgenticRAGController
+from app.services.rag_service_facade import AgenticRAGController
 import asyncio
 import json
 
@@ -20,9 +20,10 @@ def get_company_knowledge(query: str) -> str:
     Introduza a sua pergunta como texto (query).
     """
     from app.core.logging import log_context
+
     context = log_context.get()
     project_id = context.get("project_id", "default")
-    
+
     # Executa o controlador dentro do contexto do projeto
     res = asyncio.run(rag_controller.invoke(query, project_id=project_id))
     return json.dumps(res)
