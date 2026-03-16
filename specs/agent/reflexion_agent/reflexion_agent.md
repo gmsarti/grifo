@@ -185,8 +185,8 @@ O agente evolui através da auto-reflexão pós-conversa:
 
 ### [PHASE 6] Aprendizado e Extração de Conhecimento
 
-- [ ] [TASK-6.1] Implementar `KnowledgeExtractor` chain para destilar fatos do histórico.
-- [ ] [TASK-6.2] Adicionar nó `reflection_learning` ao grafo (execução assíncrona pós-resposta).
+- [x] [TASK-6.1] Implementar `KnowledgeExtractor` chain para destilar fatos do histórico.
+- [x] [TASK-6.2] Adicionar nó `extract_knowledge` ao grafo (execução assíncrona pós-resposta).
 - [ ] [TASK-6.3] Implementar lógica de resolução de conflitos (ex: novo fato contradiz fato antigo).
 - [ ] [TASK-6.4] Testar ciclo completo de aprendizado entre múltiplas threads.
 
