@@ -4,30 +4,32 @@ import os
 import tempfile
 from pathlib import Path
 from fastapi.testclient import TestClient
-import importlib
 
 
 @pytest.fixture
 def test_app(monkeypatch):
     """Fixture to provide a clean app with a temporary chroma directory."""
     temp_dir = tempfile.mkdtemp()
-    monkeypatch.setenv("CHROMA_PERSIST_DIRECTORY", temp_dir)
 
-    # Reload config to pick up new env var
-    import app.core.config
+    from app.api.routers.chat import app, get_vector_store
+    from app.data_source.vector_store import VectorStoreManager
 
-    importlib.reload(app.core.config)
+    # Override the dependency
+    def override_get_vector_store():
+        return VectorStoreManager(project_id="default")
 
-    # Reload the router module to ensure vector_store_manager uses new config
-    import app.api.routers.chat
+    # Modifying VectorStoreManager internally to use our temp_dir
+    # A cleaner way is to mock the settings but for now let's ensure the path is correct
+    monkeypatch.setattr("app.core.config.settings.CHROMA_PERSIST_DIRECTORY", temp_dir)
 
-    importlib.reload(app.api.routers.chat)
-
-    from app.api.routers.chat import app
+    app.dependency_overrides[get_vector_store] = override_get_vector_store
 
     client = TestClient(app)
 
     yield client
+
+    # Reset overrides
+    app.dependency_overrides.clear()
 
     # Cleanup
     if os.path.exists(temp_dir):

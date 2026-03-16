@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 from app.services.rag_service_facade import AgenticRAGController
@@ -34,7 +34,7 @@ async def test_rag_controller_integration():
 
         response = await controller.invoke(question)
         assert response is not None
-        assert isinstance(response, str)
+        assert isinstance(response["generation"], str)
         assert len(response) > 0
 
 
@@ -56,9 +56,7 @@ async def test_rag_graph_web_search_fallback():
             "app.processing.rag.nodes.get_rag_generation_chain",
             return_value=mock_reasoner,
         ),
-        patch(
-            "app.processing.rag.nodes.tavily_tool.ainvoke", new_callable=AsyncMock
-        ) as mock_tavily,
+        patch("app.processing.rag.nodes.TavilySearchResults.invoke") as mock_tavily,
     ):
         mock_grader = MagicMock()
         mock_grader.invoke.return_value = mock_grader_response
