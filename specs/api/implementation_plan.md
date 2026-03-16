@@ -25,25 +25,28 @@ app/
 ## Implementation Backlog
 
 ### [PHASE 0] Infraestrutura e Repositórios (Blindagem)
-- [ ] **[TASK-0.1] Setup de Pastas**: Criar a nova hierarquia e organizar arquivos atuais.
-- [ ] **[TASK-0.2] Base de Dados e Base Repository**:
+- [x] **[TASK-0.1] Setup de Pastas**: Criar a nova hierarquia e organizar arquivos atuais.
+- [x] **[TASK-0.2] Base de Dados e Base Repository**:
     - Configurar `app/core/db.py` (Async).
     - Criar `app/repositories/base_repository.py` com métodos genéricos.
-- [ ] **[TASK-0.3] Migrações**: Configurar Alembic para suportar a nova estrutura de `app/models/`.
+- [x] **[TASK-0.3] Migrações**: Configurar Alembic para suportar a nova estrutura de `app/models/`. (Nota: Tabelas criadas via Base.metadata em testes)
 
 ### [PHASE 1] Domínio de Autenticação (Épico 1)
-- [ ] **[TASK-1.1] Persistence**: Criar `app/models/user.py` e `app/repositories/user_repository.py`.
-- [ ] **[TASK-1.2] Security**: Hashing de senhas e JWT em `app/core/security.py`.
-- [ ] **[TASK-1.3] Service**: `app/services/auth_service.py` (Orquestra repositório e segurança).
+- [x] **[TASK-1.1] Persistence**: Criar `app/models/user.py` e `app/repositories/user_repository.py`.
+- [x] **[TASK-1.2] Security**: Hashing de senhas e JWT em `app/core/security.py`. (Implementado em `app/services/auth_service.py` e `app/api/deps.py`)
+- [x] **[TASK-1.3] Service**: `app/services/auth_service.py` (Orquestra repositório e segurança).
 
 ### [PHASE 2] Gestão de Projetos (Épico 2)
-- [ ] **[TASK-2.1] Repository**: CRUD de Projetos isolado em `app/repositories/project_repository.py`.
-- [ ] **[TASK-2.2] Service**: Lógica de "Workspace Padrão" no `app/services/project_service.py`.
-- [ ] **[TASK-2.3] Adapters**: Rotas REST em `app/api/routers/projects.py`.
+- [x] **[TASK-2.1] Repository**: CRUD de Projetos isolado em `app/repositories/project_repository.py`.
+- [x] **[TASK-2.2] Service**: Lógica de "Workspace Padrão" no `app/services/project_service.py`.
+- [x] **[TASK-2.3] Adapters**: Rotas REST em `app/api/routers/projects.py`.
 
 ### [PHASE 3] Engine de Chat e RAG Facade (Épicos 3 e 4)
-- [ ] **[TASK-3.1] RAG Facade**: Criar `app/services/rag_service.py` encapsulando o `app/processing/`.
-- [ ] **[TASK-3.2] Persistência de Mensagens**: `app/repositories/chat_repository.py`.
+- [ ] **[TASK-3.1] RAG Facade**: 
+    - [NEW] [rag_service.py](file:///home/gusarti/pessoal/code/agent-stack/app/services/rag_service.py): Encapsular `AgenticRAGController` e lidar com persistência de mensagens.
+- [ ] **[TASK-3.2] Persistência de Mensagens**:
+    - [NEW] [chat.py](file:///home/gusarti/pessoal/code/agent-stack/app/models/chat.py): Modelos `Session` e `Message`.
+    - [NEW] [chat_repository.py](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/chat_repository.py): CRUD de sessões e histórico.
 - [ ] **[TASK-3.3] Adapters Web**: Primeiras rotas HTMX em `app/web/routes/chat.py`.
 
 ### [PHASE 4] Ingestão e UI (Épicos 5 e 6)
