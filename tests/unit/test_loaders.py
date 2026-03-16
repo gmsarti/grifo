@@ -4,17 +4,19 @@ from app.data_source.loaders import FileIngestionService
 from langchain_core.documents import Document
 
 
+@patch("os.stat")
 @patch("os.path.exists")
-def test_file_ingestion_service_unsupported_ext(mock_exists):
+def test_file_ingestion_service_unsupported_ext(mock_exists, mock_stat):
     mock_exists.return_value = True
     service = FileIngestionService()
-    with pytest.raises(ValueError, match="Unsupported file extension"):
+    with pytest.raises(ValueError, match="Extensão não suportada"):
         service.process_file("test.unknown")
 
 
 @patch("app.data_source.loaders.PyPDFLoader")
+@patch("os.stat")
 @patch("os.path.exists")
-def test_process_pdf(mock_exists, mock_pdf_loader):
+def test_process_pdf(mock_exists, mock_stat, mock_pdf_loader):
     mock_exists.return_value = True
     service = FileIngestionService()
 
@@ -30,8 +32,9 @@ def test_process_pdf(mock_exists, mock_pdf_loader):
 
 
 @patch("app.data_source.loaders.TextLoader")
+@patch("os.stat")
 @patch("os.path.exists")
-def test_process_txt(mock_exists, mock_text_loader):
+def test_process_txt(mock_exists, mock_stat, mock_text_loader):
     mock_exists.return_value = True
     service = FileIngestionService()
 

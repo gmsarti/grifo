@@ -17,6 +17,8 @@ def test_e2e_ingestion_and_retrieval():
         patch("app.data_source.vector_store.Chroma") as mock_chroma,
         patch("app.data_source.loaders.TextLoader") as mock_loader,
         patch("os.path.exists") as mock_exists,
+        patch("os.stat") as mock_stat,
+        patch("app.data_source.vector_store.HybridRetriever"),
     ):
         mock_exists.return_value = True
 
@@ -50,7 +52,6 @@ def test_e2e_ingestion_and_retrieval():
         context = vector_manager.search_context(query)
 
         # 4. Validação
-        print(f"Contexto Recuperado: {context}")
         assert "Projeto Grifo" in context
         assert "3-tier" in context
 

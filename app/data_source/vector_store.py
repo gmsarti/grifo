@@ -1,4 +1,5 @@
-from typing import List
+from pathlib import Path
+from typing import List, Any
 from langchain_chroma import Chroma  # Oficial para LangChain/Chroma integration
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
@@ -10,6 +11,7 @@ from app.data_source.loaders import FileIngestionService, WebIngestionService
 
 from pydantic import ConfigDict
 
+
 class HybridRetriever(BaseRetriever):
     """
     Custom Retriever that combines Vector Search and BM25 using
@@ -18,11 +20,13 @@ class HybridRetriever(BaseRetriever):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    vector_retriever: BaseRetriever
-    bm25_retriever: BaseRetriever
+    vector_retriever: Any
+    bm25_retriever: Any
     k: int = 4
 
-    def _get_relevant_documents(self, query: str, *, run_manager=None) -> List[Document]:
+    def _get_relevant_documents(
+        self, query: str, *, run_manager=None
+    ) -> List[Document]:
         # Perform searches in both retrievers
         vec_docs = self.vector_retriever.invoke(query)
         bm25_docs = self.bm25_retriever.invoke(query)
@@ -70,7 +74,9 @@ class VectorStoreManager:
         self.hybrid_retriever = None  # replaced ensemble
         self._all_documents = []  # Track all docs for BM25 updates
 
-    def search(self, query: str, search_type: str = "hybrid", k: int = 3) -> List[Document]:
+    def search(
+        self, query: str, search_type: str = "hybrid", k: int = 3
+    ) -> List[Document]:
         """
         Unified search interface for the agent.
         Available types: 'hybrid', 'vector', 'bm25'.
@@ -141,19 +147,21 @@ class VectorStoreManager:
             # Obtemos metadados da coleção
             res = self.vector_store.get(include=["metadatas"])
             metadatas = res.get("metadatas", [])
-            
+
             # Extraímos fontes únicas
             unique_sources = {}
             for meta in metadatas:
                 source = meta.get("source", "unknown")
                 if source not in unique_sources:
                     unique_sources[source] = {
-                        "doc_id": source, # Usamos o source como ID lógico único
-                        "name": Path(source).name if not source.startswith("http") else source,
+                        "doc_id": source,  # Usamos o source como ID lógico único
+                        "name": Path(source).name
+                        if not source.startswith("http")
+                        else source,
                         "source": source,
-                        "type": "url" if source.startswith("http") else "file"
+                        "type": "url" if source.startswith("http") else "file",
                     }
-            
+
             return list(unique_sources.values())
         except Exception:
             return []
@@ -164,10 +172,12 @@ class VectorStoreManager:
         """
         # No Chroma via LangChain, podemos deletar usando filtros de metadados
         self.vector_store.delete(where={"source": doc_id})
-        
+
         # Opcional: Atualizar BM25 e total de documentos se necessário
         # Por simplicidade, assumimos que o BM25 será recriado na próxima adição
-        self._all_documents = [d for d in self._all_documents if d.metadata.get("source") != doc_id]
+        self._all_documents = [
+            d for d in self._all_documents if d.metadata.get("source") != doc_id
+        ]
         if not self._all_documents:
             self.bm25_retriever = None
             self.hybrid_retriever = None
