@@ -1,8 +1,9 @@
-import pytest
-import shutil
 import os
+import shutil
 import tempfile
 from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 

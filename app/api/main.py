@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from app.api.routers import auth, projects
 
 app = FastAPI(title="Agent Stack API")

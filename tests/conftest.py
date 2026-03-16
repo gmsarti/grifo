@@ -1,17 +1,11 @@
-import asyncio
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 # Mocking the base for tests (this will be relevant once app.models.base exists)
 # from app.models.base import Base
-
-
 from app.models.base import Base
-from app.models.user import User
-from app.models.project import Project
-from app.models.chat import Session, Message  # Ensure models are loaded
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +34,7 @@ async def client(db_session: AsyncSession):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    from httpx import AsyncClient, ASGITransport
+    from httpx import ASGITransport, AsyncClient
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"

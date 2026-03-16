@@ -1,5 +1,7 @@
-from typing import List, TypedDict
+from typing import TypedDict
+
 from langchain_core.documents import Document
+
 
 class GraphState(TypedDict):
     """
@@ -11,7 +13,8 @@ class GraphState(TypedDict):
         web_search: whether to add search
         documents: list of documents
     """
+
     question: str
     generation: str
     web_search: bool
-    documents: List[Document]
+    documents: list[Document]

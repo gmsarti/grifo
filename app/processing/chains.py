@@ -1,12 +1,15 @@
 import datetime
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from app.schemas.agent_schemas import AnswerQuestion, ReviseAnswer, KnowledgeExtraction
+
+from app.schemas.agent_schemas import AnswerQuestion, KnowledgeExtraction, ReviseAnswer
+
 # from langchain_core.messages import ToolCallRequest
 
 
 def get_time():
     """Returns the current UTC time in ISO format."""
-    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+    return datetime.datetime.now(datetime.UTC).isoformat()
 
 
 # Base template for all actor activities

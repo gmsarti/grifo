@@ -1,6 +1,6 @@
+from langchain_core.messages import AIMessage, HumanMessage
+
 from app.processing.agent import AgentOrchestrator
-from langgraph.graph import END
-from langchain_core.messages import HumanMessage, AIMessage
 
 
 def test_graph_structure():
@@ -29,16 +29,21 @@ def test_graph_structure():
 def test_event_loop_logic():
     """Testa lógica do event_loop isoladamente."""
     orchestrator = AgentOrchestrator()
-    
+
     # Sem tool_calls
     state_no_tools = {"messages": [HumanMessage(content="no tools")]}
     assert orchestrator.event_loop(state_no_tools) == "execute_tools"
-    
+
     # Com tool_calls = MAX_ITERATIONS (formato correto)
     CORRECT_TOOL_CALL = {
-        "name": "test_tool", "args": {}, "id": "call_123", "type": "tool"
+        "name": "test_tool",
+        "args": {},
+        "id": "call_123",
+        "type": "tool",
     }
-    state_with_tools = {"messages": [
-        AIMessage(content="", tool_calls=[CORRECT_TOOL_CALL]) for _ in range(2)
-    ]}
+    state_with_tools = {
+        "messages": [
+            AIMessage(content="", tool_calls=[CORRECT_TOOL_CALL]) for _ in range(2)
+        ]
+    }
     assert orchestrator.event_loop(state_with_tools) == "extract_knowledge"

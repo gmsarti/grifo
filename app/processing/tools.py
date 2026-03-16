@@ -1,9 +1,11 @@
-from langchain.tools import tool
-from app.data_source.vector_store import VectorStoreManager
-from app.data_source.mcp_client import MCPConnector
-from app.services.rag_service_facade import AgenticRAGController
 import asyncio
 import json
+
+from langchain.tools import tool
+
+from app.data_source.mcp_client import MCPConnector
+from app.data_source.vector_store import VectorStoreManager
+from app.services.rag_service_facade import AgenticRAGController
 
 # Instanciamos os conectores da Camada de Dados e Controladores
 vector_db = VectorStoreManager()

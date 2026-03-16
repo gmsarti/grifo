@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 # These will fail initially (Red Phase)
 # from app.repositories.project_repository import ProjectRepository
 # from app.schemas.project import ProjectCreate
@@ -8,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.fixture
 async def test_user(db_session: AsyncSession, request):
-    from app.models.user import User
     import uuid
+
+    from app.models.user import User
 
     email = f"owner_{uuid.uuid4()}@example.com"
     user = User(

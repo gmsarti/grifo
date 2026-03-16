@@ -1,19 +1,21 @@
-from typing import Any, Dict
-from langchain_core.documents import Document
-from app.data_source.vector_store import VectorStoreManager
-from app.processing.rag.state import GraphState
-from app.processing.rag.chains import (
-    get_retrieval_grader,
-    get_rag_generation_chain,
-    get_question_rewriter,
-)
-from app.core.logging import get_logger, timed_process
+from typing import Any
+
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.documents import Document
+
+from app.core.logging import get_logger, timed_process
+from app.data_source.vector_store import VectorStoreManager
+from app.processing.rag.chains import (
+    get_question_rewriter,
+    get_rag_generation_chain,
+    get_retrieval_grader,
+)
+from app.processing.rag.state import GraphState
 
 logger = get_logger(__name__)
 
 
-def retrieve(state: GraphState) -> Dict[str, Any]:
+def retrieve(state: GraphState) -> dict[str, Any]:
     """
     Retrieve documents from vectorstore
     """
@@ -29,7 +31,7 @@ def retrieve(state: GraphState) -> Dict[str, Any]:
     return {"documents": documents, "question": question}
 
 
-def generate(state: GraphState) -> Dict[str, Any]:
+def generate(state: GraphState) -> dict[str, Any]:
     """
     Generate answer
     """
@@ -45,7 +47,7 @@ def generate(state: GraphState) -> Dict[str, Any]:
     return {"generation": generation.content, "question": question}
 
 
-def grade_documents(state: GraphState) -> Dict[str, Any]:
+def grade_documents(state: GraphState) -> dict[str, Any]:
     """
     Determines whether the retrieved documents are relevant to the question.
     """
@@ -84,7 +86,7 @@ def grade_documents(state: GraphState) -> Dict[str, Any]:
     return {"documents": filtered_docs, "question": question, "web_search": web_search}
 
 
-def web_search(state: GraphState) -> Dict[str, Any]:
+def web_search(state: GraphState) -> dict[str, Any]:
     """
     Web search based based on the re-phrased question.
     """

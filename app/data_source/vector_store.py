@@ -1,15 +1,15 @@
 from pathlib import Path
-from typing import List, Any
+from typing import Any
+
 from langchain_chroma import Chroma  # Oficial para LangChain/Chroma integration
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
-from langchain_community.retrievers import BM25Retriever
+from langchain_openai import OpenAIEmbeddings
+from pydantic import ConfigDict
+
 from app.core.config import settings
 from app.data_source.loaders import FileIngestionService, WebIngestionService
-
-
-from pydantic import ConfigDict
 
 
 class HybridRetriever(BaseRetriever):
@@ -26,7 +26,7 @@ class HybridRetriever(BaseRetriever):
 
     def _get_relevant_documents(
         self, query: str, *, run_manager=None
-    ) -> List[Document]:
+    ) -> list[Document]:
         # Perform searches in both retrievers
         vec_docs = self.vector_retriever.invoke(query)
         bm25_docs = self.bm25_retriever.invoke(query)
@@ -76,7 +76,7 @@ class VectorStoreManager:
 
     def search(
         self, query: str, search_type: str = "hybrid", k: int = 3
-    ) -> List[Document]:
+    ) -> list[Document]:
         """
         Unified search interface for the agent.
         Available types: 'hybrid', 'vector', 'bm25'.
@@ -97,13 +97,13 @@ class VectorStoreManager:
             return "Nenhuma informação encontrada na base de conhecimento."
         return "\n\n".join([doc.page_content for doc in docs])
 
-    def search_bm25(self, query: str, k: int = 3) -> List[Document]:
+    def search_bm25(self, query: str, k: int = 3) -> list[Document]:
         """BM25 keyword search."""
         if not self.bm25_retriever:
             return []
         return self.bm25_retriever.invoke(query, k=k)
 
-    def search_hybrid(self, query: str, k: int = 3) -> List[Document]:
+    def search_hybrid(self, query: str, k: int = 3) -> list[Document]:
         """Hybrid: vector + BM25 via custom HybridRetriever."""
         if not self.hybrid_retriever:
             return self.vector_store.similarity_search(query, k=k)
@@ -111,7 +111,7 @@ class VectorStoreManager:
         self.hybrid_retriever.k = k
         return self.hybrid_retriever.invoke(query)
 
-    def add_documents(self, documents: List[Document]):
+    def add_documents(self, documents: list[Document]):
         """Adiciona docs, persiste e atualiza retrievers."""
         self._all_documents.extend(documents)
         self.vector_store.add_documents(documents)
@@ -138,7 +138,7 @@ class VectorStoreManager:
         documents = self.web_service.process_url(url)
         self.add_documents(documents)
 
-    def list_documents(self) -> List[dict]:
+    def list_documents(self) -> list[dict]:
         """
         Lista todos os documentos únicos (fontes) armazenados no ChromaDB.
         Retorna uma lista de metadados únicos baseados na chave 'source'.

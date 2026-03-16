@@ -1,6 +1,8 @@
 from unittest.mock import patch
-from app.data_source.loaders import WebIngestionService
+
 from langchain_core.documents import Document
+
+from app.data_source.loaders import WebIngestionService
 
 
 @patch("app.data_source.loaders.WebBaseLoader")

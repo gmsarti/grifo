@@ -1,8 +1,8 @@
-import os
-import pytest
-from unittest.mock import patch, MagicMock
-from app.data_source.vector_store import VectorStoreManager
+from unittest.mock import patch
+
 from langchain_core.documents import Document
+
+from app.data_source.vector_store import VectorStoreManager
 
 
 def test_e2e_ingestion_and_retrieval():
@@ -13,11 +13,11 @@ def test_e2e_ingestion_and_retrieval():
 
     # 1. Configuração do Mock para Embeddings e Chroma
     with (
-        patch("app.data_source.vector_store.OpenAIEmbeddings") as mock_embeddings,
-        patch("app.data_source.vector_store.Chroma") as mock_chroma,
+        patch("app.data_source.vector_store.OpenAIEmbeddings"),
+        patch("app.data_source.vector_store.Chroma"),
         patch("app.data_source.loaders.TextLoader") as mock_loader,
         patch("os.path.exists") as mock_exists,
-        patch("os.stat") as mock_stat,
+        patch("os.stat"),
         patch("app.data_source.vector_store.HybridRetriever"),
     ):
         mock_exists.return_value = True

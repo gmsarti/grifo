@@ -1,5 +1,6 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 
 @pytest.mark.asyncio
@@ -15,8 +16,8 @@ async def test_rag_service_chat_flow():
         4. Save assistant response.
         5. Return the response.
     """
-    from app.services.rag_service import RAGService
     from app.models.chat import Session
+    from app.services.rag_service import RAGService
 
     # Mocks
     mock_chat_repo = MagicMock()

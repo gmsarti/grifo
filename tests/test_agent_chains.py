@@ -1,12 +1,13 @@
-import pytest
 from unittest.mock import MagicMock
-from langchain_core.messages import HumanMessage, AIMessage
+
+import pytest
+
+from app.processing.agent import AgentOrchestrator
 from app.processing.chains import (
+    actor_prompt_template,
     get_first_responder,
     get_revisor,
-    actor_prompt_template,
 )
-from app.processing.agent import AgentOrchestrator
 
 
 def test_actor_prompt_template_partial():
@@ -21,7 +22,7 @@ def test_actor_prompt_template_partial():
 
 def test_get_first_responder():
     mock_llm = MagicMock()
-    chain = get_first_responder(mock_llm)
+    get_first_responder(mock_llm)
     # Check that bind_tools was called with AnswerQuestion
     mock_llm.bind_tools.assert_called_once()
     args, kwargs = mock_llm.bind_tools.call_args
@@ -30,7 +31,7 @@ def test_get_first_responder():
 
 def test_get_revisor():
     mock_llm = MagicMock()
-    chain = get_revisor(mock_llm)
+    get_revisor(mock_llm)
     # Check that bind_tools was called with ReviseAnswer
     mock_llm.bind_tools.assert_called_once()
     args, kwargs = mock_llm.bind_tools.call_args

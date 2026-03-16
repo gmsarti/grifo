@@ -1,6 +1,6 @@
 from app.repositories.chat_repository import ChatRepository
-from app.services.rag_service_facade import AgenticRAGController
 from app.schemas.chat import MessageCreate
+from app.services.rag_service_facade import AgenticRAGController
 
 
 class RAGService:

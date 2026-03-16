@@ -1,7 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from app.data_source.vector_store import VectorStoreManager
 from langchain_core.documents import Document
+
+from app.data_source.vector_store import VectorStoreManager
 
 
 @pytest.fixture

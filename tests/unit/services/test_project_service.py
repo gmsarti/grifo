@@ -1,5 +1,6 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 
 @pytest.mark.asyncio
@@ -10,8 +11,8 @@ async def test_get_projects_for_user():
     - When service.get_user_projects is called
     - Then it should call repo.get_by_owner and return the list.
     """
-    from app.services.project_service import ProjectService
     from app.models.project import Project
+    from app.services.project_service import ProjectService
 
     mock_repo = MagicMock()
     mock_projects = [Project(id=1, name="P1"), Project(id=2, name="P2")]
@@ -32,8 +33,8 @@ async def test_ensure_default_project_exists():
     - When service.ensure_default_project is called
     - Then it should create a new project named 'Default Project'.
     """
-    from app.services.project_service import ProjectService
     from app.repositories.project_repository import ProjectRepository
+    from app.services.project_service import ProjectService
 
     mock_repo = MagicMock(spec=ProjectRepository)
     mock_repo.get_by_owner = AsyncMock(return_value=[])
@@ -56,8 +57,8 @@ async def test_ensure_default_project_already_exists():
     - When service.ensure_default_project is called
     - Then it should NOT create a new one.
     """
-    from app.services.project_service import ProjectService
     from app.models.project import Project
+    from app.services.project_service import ProjectService
 
     mock_repo = MagicMock()
     mock_repo.get_by_owner = AsyncMock(return_value=[Project(id=1, name="Existing")])

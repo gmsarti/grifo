@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -14,7 +13,7 @@ class AnswerQuestion(BaseModel):
 
     answer: str = Field(description="Detailed answer to the question (~250 words)")
     reflection: Reflection = Field(description="Your reflection on the current answer")
-    search_queries: List[str] = Field(
+    search_queries: list[str] = Field(
         description="1-3 search queries for researching improvements to address the critique of your current answer"
     )
 
@@ -22,9 +21,10 @@ class AnswerQuestion(BaseModel):
 class ReviseAnswer(AnswerQuestion):
     """Revise the original answer to the question based on new information and critique."""
 
-    references: List[str] = Field(
+    references: list[str] = Field(
         description="References to the sources used to answer the question"
     )
+
 
 class ExtractedFact(BaseModel):
     fact: str = Field(
@@ -37,8 +37,8 @@ class ExtractedFact(BaseModel):
 
 class KnowledgeExtraction(BaseModel):
     """Extração de fatos e conhecimentos úteis da conversa para armazenamento de longo prazo."""
-    
-    facts: List[ExtractedFact] = Field(
-        default_factory=list, 
-        description="Lista de fatos extraídos. Retorne uma lista vazia se não houver nada útil ou novo para lembrar."
+
+    facts: list[ExtractedFact] = Field(
+        default_factory=list,
+        description="Lista de fatos extraídos. Retorne uma lista vazia se não houver nada útil ou novo para lembrar.",
     )

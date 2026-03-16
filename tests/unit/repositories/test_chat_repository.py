@@ -1,13 +1,15 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 # from app.repositories.chat_repository import ChatRepository
 # from app.schemas.chat import SessionCreate, MessageCreate
 
 
 @pytest.fixture
 async def test_user(db_session: AsyncSession):
-    from app.models.user import User
     import uuid
+
+    from app.models.user import User
 
     email = f"chat_{uuid.uuid4()}@example.com"
     user = User(email=email, hashed_password="hashed_password", full_name="Chat Owner")
@@ -50,7 +52,7 @@ async def test_add_message_to_session(db_session: AsyncSession, test_project):
     Test adding messages to a chat session.
     """
     from app.repositories.chat_repository import ChatRepository
-    from app.schemas.chat import SessionCreate, MessageCreate
+    from app.schemas.chat import MessageCreate, SessionCreate
 
     repo = ChatRepository(db_session)
     chat_session = await repo.create_session(SessionCreate(project_id=test_project.id))

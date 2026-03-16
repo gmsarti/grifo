@@ -1,10 +1,11 @@
 import shutil
 from pathlib import Path
-from typing import Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
-from app.processing.agent import AgentOrchestrator
+
 from app.data_source.vector_store import VectorStoreManager
+from app.processing.agent import AgentOrchestrator
 
 # Inicializamos o FastAPI
 app = FastAPI(title="Agente Grifo", version="0.1.0")
@@ -30,8 +31,8 @@ class ChatRequest(BaseModel):
     message: str
     project_id: str
     thread_id: str
-    user_id: Optional[str] = "default_user"
-    config: Optional[ChatConfig] = ChatConfig()
+    user_id: str | None = "default_user"
+    config: ChatConfig | None = ChatConfig()
 
 
 class GroundingMetadata(BaseModel):
@@ -131,7 +132,7 @@ async def ingest_url(
 
 @app.get("/api/v1/documents")
 async def list_documents(
-    project_id: Optional[str] = "default",
+    project_id: str | None = "default",
     vector_store: VectorStoreManager = Depends(get_vector_store),
 ):
     """

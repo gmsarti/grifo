@@ -1,12 +1,11 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
 class ProjectBase(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    system_prompt: Optional[str] = None
-    is_active: Optional[bool] = True
+    name: str | None = None
+    description: str | None = None
+    system_prompt: str | None = None
+    is_active: bool | None = True
 
 
 class ProjectCreate(ProjectBase):

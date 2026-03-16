@@ -1,9 +1,9 @@
-from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from app.models.chat import Message, Session
 from app.repositories.user_repository import BaseRepository
-from app.models.chat import Session, Message
-from app.schemas.chat import SessionCreate, MessageCreate
+from app.schemas.chat import MessageCreate, SessionCreate
 
 
 class ChatRepository(BaseRepository[Session, SessionCreate, None]):
@@ -20,7 +20,7 @@ class ChatRepository(BaseRepository[Session, SessionCreate, None]):
         await self.db.refresh(db_obj)
         return db_obj
 
-    async def get_history(self, session_id: int) -> List[Message]:
+    async def get_history(self, session_id: int) -> list[Message]:
         result = await self.db.execute(
             select(Message)
             .filter(Message.session_id == session_id)
@@ -28,5 +28,5 @@ class ChatRepository(BaseRepository[Session, SessionCreate, None]):
         )
         return list(result.scalars().all())
 
-    async def get_session_by_id(self, session_id: int) -> Optional[Session]:
+    async def get_session_by_id(self, session_id: int) -> Session | None:
         return await self.get_by_id(session_id)

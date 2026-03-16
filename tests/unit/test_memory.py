@@ -1,9 +1,10 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from langchain_core.messages import HumanMessage, AIMessage
-from app.processing.memory import VectorizedMessageHistory, StoreMemoryManager
+from langchain_core.messages import HumanMessage
 from langgraph.store.memory import InMemoryStore
+
+from app.processing.memory import StoreMemoryManager, VectorizedMessageHistory
 
 
 @pytest.mark.asyncio
@@ -12,7 +13,7 @@ async def test_vectorized_history_add_and_search():
 
     with (
         patch("app.processing.memory.Chroma") as mock_chroma,
-        patch("app.processing.memory.OpenAIEmbeddings") as mock_embeddings,
+        patch("app.processing.memory.OpenAIEmbeddings"),
     ):
         history = VectorizedMessageHistory("test_project", thread_id)
         mock_vs = mock_chroma.return_value

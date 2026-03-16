@@ -1,10 +1,12 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
-from app.services.rag_service_facade import AgenticRAGController
+
 from app.processing.rag.graph import create_rag_graph
-from langchain_core.documents import Document
+from app.services.rag_service_facade import AgenticRAGController
 
 
 @pytest.mark.asyncio

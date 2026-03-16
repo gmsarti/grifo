@@ -1,6 +1,7 @@
-import streamlit as st
-import httpx
 import asyncio
+
+import httpx
+import streamlit as st
 
 # Interface do Utilizador (Presentation Layer)
 st.set_page_config(page_title="Agente API-First", layout="centered")

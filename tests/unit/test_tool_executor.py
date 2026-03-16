@@ -1,7 +1,9 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from app.processing.tool_executor import run_queries, execute_tools
 from langgraph.prebuilt import ToolNode
+
+from app.processing.tool_executor import execute_tools, run_queries
 
 
 @patch("app.processing.tool_executor.TavilySearch")

@@ -1,6 +1,8 @@
-from typing import Optional, Generic, TypeVar, Type
+from typing import TypeVar
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.models.base import Base
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
@@ -10,12 +12,12 @@ CreateSchemaType = TypeVar("CreateSchemaType")
 UpdateSchemaType = TypeVar("UpdateSchemaType")
 
 
-class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType], db: AsyncSession):
+class BaseRepository[ModelType: Base, CreateSchemaType, UpdateSchemaType]:
+    def __init__(self, model: type[ModelType], db: AsyncSession):
         self.model = model
         self.db = db
 
-    async def get_by_id(self, id: int) -> Optional[ModelType]:
+    async def get_by_id(self, id: int) -> ModelType | None:
         result = await self.db.execute(select(self.model).filter(self.model.id == id))
         return result.scalars().first()
 
@@ -39,6 +41,6 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     def __init__(self, db: AsyncSession):
         super().__init__(User, db)
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         result = await self.db.execute(select(User).filter(User.email == email))
         return result.scalars().first()

@@ -1,6 +1,8 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
+
 from app.processing.agent import AgentOrchestrator
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 @pytest.mark.asyncio

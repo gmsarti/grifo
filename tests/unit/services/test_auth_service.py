@@ -1,5 +1,7 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+
 # from app.services.auth_service import AuthService
 # from app.repositories.user_repository import UserRepository
 
@@ -17,8 +19,8 @@ async def test_authenticate_user_success():
     - When authenticate is called with correct password
     - Then the user object should be returned.
     """
-    from app.services.auth_service import AuthService
     from app.models.user import User
+    from app.services.auth_service import AuthService
 
     # Setup mock
     repo = MagicMock()
@@ -43,8 +45,8 @@ async def test_authenticate_user_wrong_password():
     """
     Test authentication failure due to wrong password.
     """
-    from app.services.auth_service import AuthService
     from app.models.user import User
+    from app.services.auth_service import AuthService
 
     repo = MagicMock()
     mock_user = User(email="test@example.com", hashed_password="hashed_password")
@@ -65,8 +67,9 @@ async def test_create_access_token():
     """
     Test JWT token generation.
     """
-    from app.services.auth_service import create_access_token
     from jose import jwt
+
+    from app.services.auth_service import create_access_token
 
     data = {"sub": "test@example.com"}
     token = create_access_token(data)

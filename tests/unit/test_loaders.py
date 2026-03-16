@@ -1,7 +1,9 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
-from app.data_source.loaders import FileIngestionService
 from langchain_core.documents import Document
+
+from app.data_source.loaders import FileIngestionService
 
 
 @patch("os.stat")

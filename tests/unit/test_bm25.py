@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import patch
-from app.data_source.vector_store import VectorStoreManager
+
+import pytest
 from langchain_core.documents import Document
+
+from app.data_source.vector_store import VectorStoreManager
 
 
 @pytest.fixture

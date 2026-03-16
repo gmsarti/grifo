@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 # These imports will fail initially (TDD Red Phase)
 # from app.repositories.user_repository import UserRepository
 # from app.schemas.user import UserCreate
@@ -68,9 +69,9 @@ async def test_duplicate_email_raises_error(db_session: AsyncSession):
     """
     Ensure that creating a user with an existing email fails.
     """
+
     from app.repositories.user_repository import UserRepository
     from app.schemas.user import UserCreate
-    from sqlalchemy.exc import IntegrityError
 
     repo = UserRepository(db_session)
     user_in = UserCreate(email="duplicate@example.com", password="password123")

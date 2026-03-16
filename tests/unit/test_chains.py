@@ -1,10 +1,10 @@
-import pytest
 from unittest.mock import MagicMock
+
 from app.processing.chains import (
-    get_first_responder,
-    get_revisor,
     DRAFT_INSTRUCTION,
     REVISE_INSTRUCTION,
+    get_first_responder,
+    get_revisor,
 )
 from app.schemas.agent_schemas import AnswerQuestion, ReviseAnswer
 

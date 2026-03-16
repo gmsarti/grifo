@@ -1,10 +1,12 @@
 from app.processing.rag.graph import create_rag_graph
 
+
 class AgenticRAGController:
     """
     Controller for the Agentic RAG system.
     Exposes a clean interface for the main agent to use.
     """
+
     def __init__(self):
         self.app = create_rag_graph()
 
@@ -17,5 +19,5 @@ class AgenticRAGController:
         result = await self.app.ainvoke(inputs)
         return {
             "generation": result.get("generation", "Sorry, I couldn't find an answer."),
-            "documents": result.get("documents", [])
+            "documents": result.get("documents", []),
         }

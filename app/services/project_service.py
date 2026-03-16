@@ -1,6 +1,5 @@
-from typing import List, Optional
-from app.repositories.project_repository import ProjectRepository
 from app.models.project import Project
+from app.repositories.project_repository import ProjectRepository
 from app.schemas.project import ProjectCreate
 
 
@@ -8,7 +7,7 @@ class ProjectService:
     def __init__(self, project_repo: ProjectRepository):
         self.project_repo = project_repo
 
-    async def get_user_projects(self, user_id: int) -> List[Project]:
+    async def get_user_projects(self, user_id: int) -> list[Project]:
         return await self.project_repo.get_by_owner(user_id)
 
     async def ensure_default_project(self, user_id: int) -> Project:

@@ -1,12 +1,13 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
+
 from app.processing.rag.chains import (
-    get_retrieval_grader,
-    get_rag_generation_chain,
-    get_question_rewriter,
     GradeDocuments,
+    get_question_rewriter,
+    get_rag_generation_chain,
+    get_retrieval_grader,
 )
 
 

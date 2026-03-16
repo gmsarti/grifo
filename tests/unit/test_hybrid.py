@@ -1,8 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from app.data_source.vector_store import VectorStoreManager
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
+
+from app.data_source.vector_store import VectorStoreManager
 
 
 @pytest.fixture
@@ -39,10 +41,10 @@ def test_hybrid_retrieval(vector_manager):
     mock_vec.invoke.return_value = [docs[0]]
     mock_bm25 = MagicMock()
     mock_bm25.invoke.return_value = [docs[1]]
-    
+
     vector_manager.hybrid_retriever.vector_retriever = mock_vec
     vector_manager.hybrid_retriever.bm25_retriever = mock_bm25
-    
+
     # Test search_hybrid call
     results = vector_manager.search_hybrid("gato")
 
@@ -51,18 +53,18 @@ def test_hybrid_retrieval(vector_manager):
     assert any(d.page_content == "O gato está no telhado" for d in results)
     # O cachorro deve estar presente (vindo do bm25_retriever)
     assert any(d.page_content == "O cachorro está no jardim" for d in results)
-    
+
     mock_vec.invoke.assert_called()
     mock_bm25.invoke.assert_called()
 
 
 def test_unified_search_interface(vector_manager):
     docs = [Document(page_content="teste", metadata={"id": 1})]
-    
+
     # Mock carefully to avoid Pydantic validation error in add_documents
     mock_retriever = MagicMock(spec=BaseRetriever)
     vector_manager.vector_store.as_retriever.return_value = mock_retriever
-    
+
     vector_manager.add_documents(docs)
 
     with patch.object(vector_manager, "search_hybrid") as mock_hybrid:
