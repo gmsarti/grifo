@@ -9,9 +9,10 @@ def vector_manager():
     with (
         patch("app.data_source.vector_store.Chroma"),
         patch("app.data_source.vector_store.OpenAIEmbeddings"),
+        patch("app.data_source.vector_store.HybridRetriever"),
     ):
         vm = VectorStoreManager()
-        return vm
+        yield vm
 
 
 def test_bm25_retrieval(vector_manager):

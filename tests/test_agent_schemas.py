@@ -1,4 +1,4 @@
-from app.processing.schemas import Reflection, AnswerQuestion, ReviseAnswer
+from app.schemas.agent_schemas import Reflection, AnswerQuestion, ReviseAnswer
 import pytest
 from pydantic import ValidationError
 

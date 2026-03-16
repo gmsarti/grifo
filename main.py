@@ -15,7 +15,7 @@ def main():
             sys.executable,
             "-m",
             "uvicorn",
-            "app.api.routes:app",
+            "app.api.routers.chat:app",
             "--host",
             "0.0.0.0",
             "--port",
@@ -29,7 +29,7 @@ def main():
     print("A iniciar a interface Streamlit (Frontend)...")
     # Inicia o Streamlit na porta 8501
     ui_process = subprocess.Popen(
-        [sys.executable, "-m", "streamlit", "run", "app/presentation/web_ui.py"]
+        [sys.executable, "-m", "streamlit", "run", "app/web/legacy_web_ui.py"]
     )
 
     try:

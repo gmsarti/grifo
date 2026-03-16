@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from app.processing.tool_executor import run_queries, execute_tools
 from langgraph.prebuilt import ToolNode
 
@@ -12,14 +12,18 @@ def test_tavily_initialization_with_settings(mock_tavily_class):
     pass
 
 
-def test_run_queries_calls_tavily_batch():
-    with patch("app.processing.tool_executor.tavily_tool") as mock_tavily:
-        queries = ["query 1", "query 2"]
-        run_queries(queries)
+@pytest.mark.asyncio
+async def test_run_queries_calls_tavily():
+    mock_tavily = AsyncMock()
+    mock_tavily.ainvoke = AsyncMock(return_value=[])
+    with (
+        patch("app.processing.tool_executor.tavily_tool", mock_tavily),
+        patch("app.processing.tool_executor.vector_db.search_hybrid", return_value=[]),
+    ):
+        queries = ["query 1"]
+        await run_queries(queries)
 
-        mock_tavily.batch.assert_called_once_with(
-            [{"query": "query 1"}, {"query": "query 2"}]
-        )
+        mock_tavily.ainvoke.assert_called_once_with({"query": "query 1"})
 
 
 def test_execute_tools_is_valid_tool_node():

@@ -3,7 +3,7 @@ from langchain_core.tools import StructuredTool
 from langgraph.prebuilt import ToolNode
 from app.core.config import settings
 from app.core.llm import get_fast_model
-from app.processing.schemas import AnswerQuestion, ReviseAnswer
+from app.schemas.agent_schemas import AnswerQuestion, ReviseAnswer
 from app.data_source.vector_store import VectorStoreManager
 
 # Connectors
@@ -15,6 +15,7 @@ tavily_tool = TavilySearch(**tavily_kwargs)
 
 # Grader LLM
 grader_llm = get_fast_model()
+
 
 async def grade_document_relevance(query: str, document_content: str) -> bool:
     """Uses a fast model to grade document relevance (simple binary check)."""
@@ -29,6 +30,7 @@ Respond only with 'YES' or 'NO'."""
     except Exception:
         return True  # Fallback to relevant if error
 
+
 async def run_queries(search_queries: list[str], **kwargs):
     """
     Run hybrid search with CRAG fallback.
@@ -36,12 +38,12 @@ async def run_queries(search_queries: list[str], **kwargs):
     2. If docs are missing or graded irrelevant, search Tavily.
     """
     results = []
-    
+
     for query in search_queries:
         # 1. Search Vector Store
         docs = vector_db.search_hybrid(query, k=3)
         context = ""
-        
+
         if docs:
             # 2. Grade documents
             relevant_docs = []
@@ -49,17 +51,17 @@ async def run_queries(search_queries: list[str], **kwargs):
                 is_relevant = await grade_document_relevance(query, doc.page_content)
                 if is_relevant:
                     relevant_docs.append(doc.page_content)
-            
+
             if relevant_docs:
                 context = "\n\n".join(relevant_docs)
-            
+
         # 3. Fallback to Tavily if context is empty
         if not context:
             web_results = await tavily_tool.ainvoke({"query": query})
             context = str(web_results)
-            
+
         results.append(context)
-        
+
     return "\n---\n".join(results)
 
 

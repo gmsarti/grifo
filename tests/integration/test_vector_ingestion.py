@@ -9,8 +9,10 @@ def vector_manager():
     with (
         patch("app.data_source.vector_store.Chroma"),
         patch("app.data_source.vector_store.OpenAIEmbeddings"),
+        patch("app.data_source.vector_store.HybridRetriever"),
     ):
-        return VectorStoreManager()
+        vm = VectorStoreManager()
+        yield vm
 
 
 @patch("app.data_source.loaders.FileIngestionService.process_file")

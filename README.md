@@ -23,42 +23,60 @@ Este repositório é uma implementação padrão de referência para aplicaçõe
 - 🧠 **Agente Reflexivo**: Orquestração de raciocínio avançado com ciclos de crítica e refinamento.
 - 📚 **RAG (Retrieval-Augmented Generation)**: Busca semântica eficiente utilizando ChromaDB.
 - 🛠️ **Ecossistema de Ferramentas**: Integração nativa com ferramentas e APIs externas.
-- 🖥️ **Interface Moderna**: Dashboard interativo e chat desenvolvidos com Streamlit.
-- 🏗️ **Arquitetura 3-Tier**: Separação clara entre Apresentação, Processamento e Dados.
+- 🖥️ **Interface Reativa (HTMX)**: Experiência SPA moderna com FastAPI + HTMX + Tailwind CSS.
+- 🏗️ **Arquitetura Clean/Hexagonal**: Desacoplamento estrito entre lógica de negócio, persistência e interfaces.
 
 ## 🏗️ Arquitetura do Sistema
 
-O projeto segue a separação lógica e física proposta para sistemas agentizados modernos:
+O projeto segue princípios de **Clean Architecture**, dividindo o sistema em camadas concêntricas que protegem o domínio.
 
 ```mermaid
 graph TD
-    subgraph "Presentation Layer (Streamlit)"
-        UI[Web UI / Dashboard]
+    User((Usuário))
+
+    subgraph "Adapters (Interfaces)"
+        Web[app/web/ - HTMX/HTML]
+        API[app/api/ - REST JSON]
     end
 
-    subgraph "Processing Layer (LangChain)"
-        Agent[Agentic Logic]
-        Tools[Tool Definition]
+    subgraph "Application Layer"
+        Services[app/services/ - Lógica de Negócio]
+        RAGFacade[app/services/rag_service_facade.py]
     end
 
-    subgraph "Data Source Layer"
-        RAG[Vector Store / ChromaDB]
-        APIs[External Connectors / MCP]
+    subgraph "Domain & Persistence"
+        Repos[app/repositories/ - Repository Pattern]
+        Models[app/models/ - SQLAlchemy]
+        Schemas[app/schemas/ - Pydantic]
     end
 
-    UI <--> Agent
-    Agent <--> Tools
-    Agent <--> RAG
-    Agent <--> APIs
+    subgraph "Core AI Engine"
+        IA[app/processing/ - LangGraph/RAG]
+    end
+
+    User --> Web
+    User --> API
+    Web --> Services
+    API --> Services
+    Services --> Repos
+    Services --> RAGFacade
+    Repos --> Models
+    RAGFacade --> IA
 ```
 
 ---
 
 ## 📂 Estrutura do Projeto
 
-- **[app/presentation/](file:///home/gusarti/pessoal/code/agent-stack/app/presentation/)**: Interface do usuário e experiência visual.
-- **[app/processing/](file:///home/gusarti/pessoal/code/agent-stack/app/processing/)**: O "cérebro" do agente, orquestração e lógica de raciocínio.
-- **[app/data_source/](file:///home/gusarti/pessoal/code/agent-stack/app/data_source/)**: Conectores de dados, bases vetoriais e APIs externas.
+- **[app/core/](file:///home/gusarti/pessoal/code/agent-stack/app/core/)**: Configurações globais, segurança e dependências infra.
+- **[app/api/](file:///home/gusarti/pessoal/code/agent-stack/app/api/)**: Adaptadores REST que servem contratos em JSON.
+- **[app/web/](file:///home/gusarti/pessoal/code/agent-stack/app/web/)**: Adaptadores UI que servem fragmentos HTML para o HTMX.
+- **[app/services/](file:///home/gusarti/pessoal/code/agent-stack/app/services/)**: Orquestradores da lógica de negócio e Fachada de IA.
+- **[app/repositories/](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/)**: Abstração da persistência (SQLAlchemy).
+- **[app/models/](file:///home/gusarti/pessoal/code/agent-stack/app/models/)**: Definições das entidades do banco de dados.
+- **[app/schemas/](file:///home/gusarti/pessoal/code/agent-stack/app/schemas/)**: Contratos de dados (Pydantic).
+- **[app/processing/](file:///home/gusarti/pessoal/code/agent-stack/app/processing/)**: O motor de IA, LangGraph e definições do Agente.
+- **[app/data_source/](file:///home/gusarti/pessoal/code/agent-stack/app/data_source/)**: Mecânica de RAG (loaders e vector_store).
 
 ## 🛠️ Como Rodar
 
