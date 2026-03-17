@@ -7,29 +7,29 @@ from app.core.llm import get_fast_model
 from app.data_source.vector_store import VectorStoreManager
 from app.schemas.agent_schemas import AnswerQuestion, ReviseAnswer
 
-# Connectors
-vector_db = VectorStoreManager()
-tavily_kwargs = {"max_results": 3}
-if settings.TAVILY_API_KEY:
-    tavily_kwargs["tavily_api_key"] = settings.TAVILY_API_KEY
-tavily_tool = TavilySearch(**tavily_kwargs)
+# Connectors & Tools
+# Usamos "Lazy Loading" (carregamento sob demanda) para que as ferramentas sejam
+# instanciadas apenas no momento da execução. Isso evita erros de validação
+# de chaves de API durante o carregamento do módulo (import time),
+# o que é essencial para que os testes unitários rodem em ambientes de CI.
 
-# Grader LLM
-grader_llm = get_fast_model()
+_grader_llm = None
 
 
-async def grade_document_relevance(query: str, document_content: str) -> bool:
-    """Uses a fast model to grade document relevance (simple binary check)."""
-    prompt = f"""Evaluate if the following document is relevant to the query:
-Query: {query}
-Document: {document_content}
+def get_grader_llm():
+    """Retorna o LLM de avaliação de forma preguiçosa (lazy)."""
+    global _grader_llm
+    if _grader_llm is None:
+        _grader_llm = get_fast_model()
+    return _grader_llm
 
-Respond only with 'YES' or 'NO'."""
-    try:
-        response = await grader_llm.ainvoke(prompt)
-        return "YES" in response.content.upper()
-    except Exception:
-        return True  # Fallback to relevant if error
+
+def get_tavily_tool():
+    """Instancia o TavilySearch apenas quando necessário."""
+    tavily_kwargs = {"max_results": 3}
+    if settings.TAVILY_API_KEY:
+        tavily_kwargs["tavily_api_key"] = settings.TAVILY_API_KEY
+    return TavilySearch(**tavily_kwargs)
 
 
 async def run_queries(search_queries: list[str], **kwargs):
@@ -39,6 +39,8 @@ async def run_queries(search_queries: list[str], **kwargs):
     2. If docs are missing or graded irrelevant, search Tavily.
     """
     results = []
+    vector_db = VectorStoreManager()
+    tavily_tool = get_tavily_tool()
 
     for query in search_queries:
         # 1. Search Vector Store
@@ -64,6 +66,21 @@ async def run_queries(search_queries: list[str], **kwargs):
         results.append(context)
 
     return "\n---\n".join(results)
+
+
+async def grade_document_relevance(query: str, document_content: str) -> bool:
+    """Uses a fast model to grade document relevance (simple binary check)."""
+    prompt = f"""Evaluate if the following document is relevant to the query:
+Query: {query}
+Document: {document_content}
+
+Respond only with 'YES' or 'NO'."""
+    try:
+        grader_llm = get_grader_llm()
+        response = await grader_llm.ainvoke(prompt)
+        return "YES" in response.content.upper()
+    except Exception:
+        return True  # Fallback to relevant if error
 
 
 execute_tools = ToolNode(

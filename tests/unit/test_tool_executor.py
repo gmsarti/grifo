@@ -18,10 +18,17 @@ def test_tavily_initialization_with_settings(mock_tavily_class):
 async def test_run_queries_calls_tavily():
     mock_tavily = AsyncMock()
     mock_tavily.ainvoke = AsyncMock(return_value=[])
+
     with (
-        patch("app.processing.tool_executor.tavily_tool", mock_tavily),
-        patch("app.processing.tool_executor.vector_db.search_hybrid", return_value=[]),
+        patch("app.processing.tool_executor.get_tavily_tool", return_value=mock_tavily),
+        patch("app.processing.tool_executor.VectorStoreManager") as mock_vdb_class,
+        patch(
+            "app.processing.tool_executor.grade_document_relevance", return_value=False
+        ),
     ):
+        mock_vdb = mock_vdb_class.return_value
+        mock_vdb.search_hybrid.return_value = []
+
         queries = ["query 1"]
         await run_queries(queries)
 
