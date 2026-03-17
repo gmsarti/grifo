@@ -9,22 +9,25 @@ O `pre-commit` cuida da limpeza básica antes de cada commit.
 - **Instalação**: `uv run pre-commit install`
 - **O que ele faz**: Roda o Ruff para corrigir erros automáticos e formatar o código. Se algo estiver muito errado, ele te avisa.
 
-## 2. GitHub CI (Simplificado)
+## Qualidade e Testes (Manual)
 
-Toda vez que você enviar código para o GitHub:
-1. **Linting**: O Ruff verifica se não há erros críticos (variáveis não usadas, bugs lógicos).
-2. **Testes Unitários**: Apenas os testes de unidade (que não dependem de banco de dados ou APIs reais) são executados para garantir que a lógica base está correta.
+Como o CI foi desativado, você pode rodar as ferramentas de qualidade manualmente quando desejar.
 
-Isso garante que o projeto "funciona" sem a burocracia de falhar por causa de um espaço extra ou uma aspa simples.
-
----
-
-## 3. Comandos Rápidos
+### 1. Limpeza e Formatação (Ruff)
 
 ```bash
-# Limpar e formatar tudo agora
-uv run ruff check --fix . && uv run ruff format .
+# Corrigir erros automáticos e organizar imports
+uv run ruff check --fix .
 
-# Rodar apenas os testes rápidos (Unitários)
+# Formatar o código (espaços, aspas, etc)
+uv run ruff format .
+```
+
+### 2. Testes (Pytest)
+
+```bash
+# Rodar todos os testes unitários
 uv run pytest tests/unit
 ```
+
+*(Opcional) Se você ainda quiser que o Ruff rode automaticamente antes de cada commit no seu computador, você pode manter o `pre-commit` instalado com `uv run pre-commit install`.*
