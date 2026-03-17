@@ -54,10 +54,10 @@ app/
 - [x] **[TASK-3.2] Persistência de Mensagens**:
     - [x] [chat.py](file:///home/gusarti/pessoal/code/agent-stack/app/models/chat.py): Modelos `Session` e `Message`.
     - [x] [chat_repository.py](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/chat_repository.py): CRUD de sessões e histórico.
-- [/] **[TASK-3.3] Adapters Web (Detailed)**: 
-    - [ ] **[TASK-3.3.1] Design System**: `base.html` com Tailwind e HTMX.
-    - [ ] **[TASK-3.3.2] Chat View**: `pages/chat.html` e `GET /web/chat/{session_id}`.
-    - [ ] **[TASK-3.3.3] Interactive Chat**: `partials/thinking.html` e `POST /web/chat/{session_id}/message`.
+- [x] **[TASK-3.3] Adapters Web (Detailed)**: 
+    - [x] **[TASK-3.3.1] Design System**: `base.html` com Tailwind e HTMX.
+    - [x] **[TASK-3.3.2] Chat View**: `pages/chat.html` e `GET /web/chat/{session_id}`.
+    - [x] **[TASK-3.3.3] Interactive Chat**: `partials/thinking.html` e `POST /web/chat/{session_id}/message`.
 
 ### [PHASE 4] Ingestão e UI (Épicos 5 e 6)
 - [ ] **[TASK-4.1] Document Service**: Gestão de upload e vetores.
