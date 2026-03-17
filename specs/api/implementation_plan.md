@@ -42,12 +42,22 @@ app/
 - [x] **[TASK-2.3] Adapters**: Rotas REST em `app/api/routers/projects.py`.
 
 ### [PHASE 3] Engine de Chat e RAG Facade (Épicos 3 e 4)
-- [ ] **[TASK-3.1] RAG Facade**: 
-    - [NEW] [rag_service.py](file:///home/gusarti/pessoal/code/agent-stack/app/services/rag_service.py): Encapsular `AgenticRAGController` e lidar com persistência de mensagens.
-- [ ] **[TASK-3.2] Persistência de Mensagens**:
-    - [NEW] [chat.py](file:///home/gusarti/pessoal/code/agent-stack/app/models/chat.py): Modelos `Session` e `Message`.
-    - [NEW] [chat_repository.py](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/chat_repository.py): CRUD de sessões e histórico.
-- [ ] **[TASK-3.3] Adapters Web**: Primeiras rotas HTMX em `app/web/routes/chat.py`.
+
+**User Stories:**
+1. **View History**: Ver mensagens anteriores ao abrir uma sessão.
+2. **Instant Feedback**: Mensagem do usuário aparece imediatamente ao enviar.
+3. **Processing State**: Indicador de "Pensando..." enquanto o agente processa.
+4. **Reactive Response**: Resposta do agente aparece via HTMX sem recarregar a página.
+
+- [x] **[TASK-3.1] RAG Facade**: 
+    - [x] [rag_service.py](file:///home/gusarti/pessoal/code/agent-stack/app/services/rag_service.py): Encapsular `AgenticRAGController`.
+- [x] **[TASK-3.2] Persistência de Mensagens**:
+    - [x] [chat.py](file:///home/gusarti/pessoal/code/agent-stack/app/models/chat.py): Modelos `Session` e `Message`.
+    - [x] [chat_repository.py](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/chat_repository.py): CRUD de sessões e histórico.
+- [/] **[TASK-3.3] Adapters Web (Detailed)**: 
+    - [ ] **[TASK-3.3.1] Design System**: `base.html` com Tailwind e HTMX.
+    - [ ] **[TASK-3.3.2] Chat View**: `pages/chat.html` e `GET /web/chat/{session_id}`.
+    - [ ] **[TASK-3.3.3] Interactive Chat**: `partials/thinking.html` e `POST /web/chat/{session_id}/message`.
 
 ### [PHASE 4] Ingestão e UI (Épicos 5 e 6)
 - [ ] **[TASK-4.1] Document Service**: Gestão de upload e vetores.

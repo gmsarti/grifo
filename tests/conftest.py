@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Mocking the base for tests (this will be relevant once app.models.base exists)
-# from app.models.base import Base
 from app.models.base import Base
+from app.models.chat import Message, Session
+from app.models.project import Project
+from app.models.user import User
 
 
 @pytest.fixture(scope="session")
@@ -17,6 +18,14 @@ async def engine():
         poolclass=StaticPool,
     )
 
+    from sqlalchemy import event
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -26,7 +35,7 @@ async def engine():
 
 @pytest.fixture
 async def client(db_session: AsyncSession):
-    from app.api.main import app
+    from app.main import app
     from app.core.db import get_db
 
     async def override_get_db():

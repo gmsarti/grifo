@@ -15,7 +15,10 @@ async def test_get_projects_for_user():
     from app.services.project_service import ProjectService
 
     mock_repo = MagicMock()
-    mock_projects = [Project(id=1, name="P1"), Project(id=2, name="P2")]
+    mock_projects = [
+        Project(id=1, name="P1", owner_id=1),
+        Project(id=2, name="P2", owner_id=1),
+    ]
     mock_repo.get_by_owner = AsyncMock(return_value=mock_projects)
 
     service = ProjectService(mock_repo)

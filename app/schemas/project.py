@@ -5,6 +5,7 @@ class ProjectBase(BaseModel):
     name: str | None = None
     description: str | None = None
     system_prompt: str | None = None
+    owner_id: int | None = None
     is_active: bool | None = True
 
 

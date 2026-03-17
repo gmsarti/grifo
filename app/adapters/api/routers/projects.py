@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api import deps
+from app.adapters.api import deps
 from app.core.db import get_db
 from app.models.user import User
 from app.repositories.project_repository import ProjectRepository
@@ -27,8 +27,7 @@ async def create_project(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user),
 ):
-    ProjectRepository(db)
-    # Convert schema to dict and add owner_id
+    # Ignore any owner_id sent by the client and force it to current_user.id
     obj_data = project_in.model_dump()
     obj_data["owner_id"] = current_user.id
 

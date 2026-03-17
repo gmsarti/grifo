@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agent Stack{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            950: '#020617',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans antialiased selection:bg-indigo-500/30">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-white">Agent Stack</span>
+                </div>
+                
+                <nav class="space-y-1">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-indigo-400 bg-indigo-500/10 rounded-lg group transition-colors">
+                        <i data-lucide="message-square" class="w-5 h-5"></i>
+                        <span class="font-medium">Chat</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg group transition-colors">
+                        <i data-lucide="folder-kanban" class="w-5 h-5"></i>
+                        <span class="font-medium">Projects</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg group transition-colors">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                        <span class="font-medium">Documents</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <div class="mt-auto p-6 border-t border-slate-800">
+                <div class="flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer group">
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-300"></i>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-sm font-medium text-white truncate">User Account</p>
+                        <p class="text-xs text-slate-500 truncate">user@example.com</p>
+                    </div>
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden relative">
+            <!-- Header bar (optional) -->
+            <header class="h-16 border-b border-slate-800 flex items-center px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10">
+                {% block header %}
+                <h1 class="text-lg font-semibold text-white">Chat com Agente</h1>
+                {% endblock %}
+            </header>
+            
+            <!-- Dynamic Content -->
+            <div class="flex-1 overflow-y-auto" id="main-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Init Lucide icons
+        lucide.createIcons();
+        
+        // Handle HTMX content swaps for icons
+        document.body.addEventListener('htmx:afterSwap', function() {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

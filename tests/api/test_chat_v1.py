@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.routers.chat import app
+from app.adapters.api.routers.chat import app
 
 client = TestClient(app)
 

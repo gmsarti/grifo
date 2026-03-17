@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite+aiosqlite:///./sql_app.db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./data/sql_app.db"
     SECRET_KEY: str = "supersecretkey"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # Text Processing
     CHUNK_SIZE: int = 1000
-    CHUNK_OVERLAP: int = 100
+    CHUNK_OVERLAP: int = 200
 
     # Agent
     REFLEXION_MAX_ITERATIONS: int = 2

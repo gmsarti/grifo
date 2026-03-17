@@ -12,7 +12,7 @@ def test_app(monkeypatch):
     """Fixture to provide a clean app with a temporary chroma directory."""
     temp_dir = tempfile.mkdtemp()
 
-    from app.api.routers.chat import app, get_vector_store
+    from app.adapters.api.routers.chat import app, get_vector_store
     from app.data_source.vector_store import VectorStoreManager
 
     # Override the dependency
