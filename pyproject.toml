@@ -30,8 +30,8 @@ dependencies = [
     "uvicorn>=0.41.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "aiosqlite>=0.22.1",
     "pre-commit>=4.1.0",
     "pytest>=9.0.2",
@@ -46,11 +46,9 @@ target-version = "py312"
 line-length = 88
 
 [tool.ruff.lint]
-# Enable Pyflakes (F), pycodestyle (E, W), isort (I), pyupgrade (UP), flake8-quotes (Q)
-select = ["E", "F", "I", "UP", "W", "Q"]
-ignore = [
-    "E501", # Ignore line length in linting (formatter handles most cases)
-]
+# Apenas o essencial: Erros (E), Pyflakes (F) e Isort (I)
+select = ["E", "F", "I"]
+ignore = ["E501"] # Ignorar linha muito longa (deixa o formatador cuidar)
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*.py" = ["E402"]

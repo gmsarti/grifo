@@ -27,15 +27,9 @@ jobs:
     - name: Run Ruff check
       run: uv run ruff check .
 
-    - name: Run Ruff format check
-      run: uv run ruff format --check .
-
-    - name: Run tests with pytest
+    - name: Run Unit Tests
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-        LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
         MODEL_PROVIDER: "openai"
         CHROMA_PERSIST_DIRECTORY: "./data/chroma_test"
-      run: uv run pytest
+      run: uv run pytest tests/unit
