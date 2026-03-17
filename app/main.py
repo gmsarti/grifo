@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.adapters.api.main import router as api_router
+from app.adapters.web.main import router as web_router
 from app.core.db import engine
 from app.models.base import Base
 
@@ -25,6 +26,7 @@ app.mount("/static", StaticFiles(directory="app/adapters/web/static"), name="sta
 
 # Include Adapters
 app.include_router(api_router, prefix="/api")
+app.include_router(web_router, prefix="/web")
 
 
 @app.get("/web/", response_class=HTMLResponse)

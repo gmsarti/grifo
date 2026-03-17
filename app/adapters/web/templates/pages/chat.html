@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Grifo - Research Session #{{ session_id }}{% endblock %}
+
+{% block content %}
+<div class="flex h-full w-full overflow-hidden">
+    <!-- Chat Area (60%) -->
+    <section class="w-[60%] flex flex-col h-full border-r border-coffee/5 relative">
+        <!-- Chat Header -->
+        <header class="h-16 shrink-0 border-b border-coffee/5 flex items-center px-8 bg-parchment/80 backdrop-blur-sm sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <div class="w-2 h-2 rounded-full bg-terracotta animate-pulse"></div>
+                <h1 class="font-fraunces text-lg italic text-coffee/80 tracking-wide">Session Registry #{{ session_id }}</h1>
+            </div>
+        </header>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" 
+             class="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12 scroll-smooth selection:bg-terracotta/20"
+             hx-get="/web/chat/{{ session_id }}/history" 
+             hx-trigger="load delay:100ms"
+             hx-swap="innerHTML">
+            
+            {% for msg in messages %}
+                {% include "partials/message.html" %}
+            {% endfor %}
+            
+            <!-- Target for new messages -->
+            <div id="new-messages-anchor"></div>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="p-8 lg:p-12 pt-0 shrink-0 bg-gradient-to-t from-parchment via-parchment to-transparent">
+            <form hx-post="/web/chat/{{ session_id }}/message" 
+                  hx-target="#new-messages-anchor" 
+                  hx-swap="beforebegin"
+                  hx-indicator="#thinking-indicator"
+                  class="relative group"
+                  onreset="setTimeout(() => { this.querySelector('textarea').style.height = 'auto' }, 10)">
+                
+                <textarea name="message" 
+                          rows="1" 
+                          placeholder="Exponha sua dúvida ou pensamento ao Grifo..."
+                          class="w-full bg-transparent border-b border-coffee/20 py-4 pr-16 focus:border-coffee/60 outline-none transition-all resize-none font-lora text-lg placeholder:text-coffee/30 leading-relaxed"
+                          oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'"
+                          onkeydown="if(event.keyCode == 13 && !event.shiftKey) { event.preventDefault(); htmx.trigger(this.form, 'submit'); this.value = ''; this.style.height = 'auto'; }"></textarea>
+                
+                <button type="submit" 
+                        class="absolute right-0 bottom-4 w-10 h-10 flex items-center justify-center border border-coffee/20 hover:border-terracotta hover:bg-terracotta/5 transition-all group/btn">
+                    <i data-lucide="send" class="w-4 h-4 text-coffee/40 group-hover/btn:text-terracotta transition-colors"></i>
+                </button>
+            </form>
+            
+            <div id="thinking-indicator" class="htmx-indicator mt-4">
+                {% include "partials/thinking.html" %}
+            </div>
+            
+            <p class="mt-6 font-mono text-[9px] uppercase tracking-[0.2em] text-coffee/20 text-center">
+                Reflexion Agent • Modern Scriptorium Protocol v1.0
+            </p>
+        </div>
+    </section>
+
+    <!-- Marginalia Area (40%) -->
+    <aside class="w-[40%] h-full bg-parchment/30 overflow-y-auto p-8 lg:p-12 space-y-12 marginalia-line">
+        <header class="mb-12">
+            <h2 class="font-mono text-[10px] uppercase tracking-[0.3em] text-coffee/40 mb-2">Marginalia & Fontes</h2>
+            <div class="w-12 h-[1px] bg-coffee/20"></div>
+        </header>
+
+        <div id="marginalia-content" class="space-y-10">
+            {% include "partials/marginalia.html" %}
+        </div>
+    </aside>
+</div>
+
+<script>
+    // Scroll to bottom on load and after message swap
+    function scrollToBottom() {
+        const chatContainer = document.getElementById('chat-messages');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === "chat-messages" || evt.detail.target.id === "new-messages-anchor") {
+            scrollToBottom();
+            // Re-init icons for dynamic content
+            lucide.createIcons();
+        }
+    });
+    
+    window.addEventListener('load', scrollToBottom);
+</script>
+{% endblock %}
