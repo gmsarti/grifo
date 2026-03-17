@@ -41,7 +41,7 @@ async def test_rag_service_chat_flow():
     # Verify calls
     mock_chat_repo.get_session_by_id.assert_called_once_with(1)
     mock_rag_controller.invoke.assert_called_once_with(
-        "What is the answer?", project_id=10
+        "What is the answer?", project_id="10"
     )
 
     # Verify two messages were saved (user and assistant)

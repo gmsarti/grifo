@@ -58,15 +58,13 @@ async def test_rag_graph_web_search_fallback():
             "app.processing.rag.nodes.get_rag_generation_chain",
             return_value=mock_reasoner,
         ),
-        patch("app.processing.rag.nodes.TavilySearchResults.invoke") as mock_tavily,
+        patch("app.processing.rag.nodes.TavilySearch.invoke") as mock_tavily,
     ):
         mock_grader = MagicMock()
         mock_grader.invoke.return_value = mock_grader_response
         mock_get_grader.return_value = mock_grader
 
-        mock_tavily.return_value = [
-            Document(page_content="Web result", metadata={"source": "web_search"})
-        ]
+        mock_tavily.return_value = "Web result"
 
         app = create_rag_graph()
         question = "Qual a previsão do tempo em Tokyo hoje?"

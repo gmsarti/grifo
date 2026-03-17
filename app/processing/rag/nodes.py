@@ -1,7 +1,9 @@
 from typing import Any
 
-from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.documents import Document
+
+# from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_tavily import TavilySearch
 
 from app.core.logging import get_logger, timed_process
 from app.data_source.vector_store import VectorStoreManager
@@ -102,21 +104,15 @@ def web_search(state: GraphState) -> dict[str, Any]:
         # Web search
         from app.core.config import settings
 
-        search = TavilySearchResults(k=3, tavily_api_key=settings.TAVILY_API_KEY)
-        results = search.invoke({"query": better_question.content})
+        search = TavilySearch(max_results=3, tavily_api_key=settings.TAVILY_API_KEY)
+        web_results_raw = search.invoke({"query": better_question.content})
 
-        content_list = []
-        for d in results:
-            if hasattr(d, "page_content"):
-                content_list.append(d.page_content)
-            elif isinstance(d, dict) and "content" in d:
-                content_list.append(d["content"])
-            else:
-                content_list.append(str(d))
+        # TavilySearch usually returns a string when invoked as a tool in some versions,
+        # but let's ensure we handle it correctly.
+        web_results_text = str(web_results_raw)
 
-        web_results = "\n".join(content_list)
         web_results = Document(
-            page_content=web_results, metadata={"source": "web_search"}
+            page_content=web_results_text, metadata={"source": "web_search"}
         )
 
         documents.append(web_results)

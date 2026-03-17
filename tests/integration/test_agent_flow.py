@@ -52,10 +52,15 @@ async def test_tool_executor_crag_flow():
     from app.processing.tool_executor import run_queries
 
     with (
-        patch("app.processing.tool_executor.vector_db") as mock_vdb,
-        patch("app.processing.tool_executor.tavily_tool") as mock_tavily,
-        patch("app.processing.tool_executor.grader_llm") as mock_grader,
+        patch("app.processing.tool_executor.VectorStoreManager") as mock_vdb_class,
+        patch("app.processing.tool_executor.get_tavily_tool") as mock_get_tavily,
+        patch("app.processing.tool_executor.get_grader_llm") as mock_get_grader,
     ):
+        # Setup mock instances
+        mock_vdb = mock_vdb_class.return_value
+        mock_tavily = mock_get_tavily.return_value
+        mock_grader = mock_get_grader.return_value
+
         # Scenario: Local search returns irrelevant docs -> Fallback to Tavily
         mock_vdb.search_hybrid.return_value = [
             MagicMock(page_content="Some irrelevant local doc")
