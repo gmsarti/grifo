@@ -80,14 +80,22 @@
             </div>
             
             <div class="mt-auto p-4 lg:p-6 border-t border-coffee/5">
-                <div class="flex items-center gap-4 group cursor-pointer">
-                    <div class="w-10 h-10 border border-coffee/20 flex items-center justify-center group-hover:bg-coffee/5 transition-colors">
-                        <i data-lucide="user" class="w-5 h-5 text-coffee/80"></i>
+                <div class="flex items-center justify-between group">
+                    <div class="flex items-center gap-4 cursor-pointer">
+                        <div class="w-10 h-10 border border-coffee/20 flex items-center justify-center group-hover:bg-coffee/5 transition-colors">
+                            <i data-lucide="user" class="w-5 h-5 text-coffee/80"></i>
+                        </div>
+                        <div class="hidden lg:block overflow-hidden transition-all">
+                            <p class="font-mono text-[10px] uppercase tracking-tighter text-coffee/50">Researcher</p>
+                            <p class="font-lora text-sm truncate">{{ current_user.full_name if current_user else "Guest" }}</p>
+                        </div>
                     </div>
-                    <div class="hidden lg:block overflow-hidden transition-all">
-                        <p class="font-mono text-[10px] uppercase tracking-tighter text-coffee/50">Researcher</p>
-                        <p class="font-lora text-sm truncate">Gustavo Sarti</p>
-                    </div>
+                    
+                    <form action="/web/logout" method="post" class="hidden lg:block">
+                        <button type="submit" class="w-8 h-8 flex items-center justify-center hover:bg-terracotta/10 rounded transition-colors" title="Logout">
+                            <i data-lucide="log-out" class="w-4 h-4 text-terracotta/60"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         </aside>

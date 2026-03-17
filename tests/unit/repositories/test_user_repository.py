@@ -81,3 +81,17 @@ async def test_duplicate_email_raises_error(db_session: AsyncSession):
         Exception
     ):  # We expect some form of failure (IntegrityError or custom)
         await repo.create(user_in)
+
+
+@pytest.mark.asyncio
+async def test_create_user_with_hash_stores_hashed_password(db_session: AsyncSession):
+    """
+    Test individual user creation in the repository using password hashing.
+    """
+    from app.repositories.user_repository import UserRepository
+
+    repo = UserRepository(db_session)
+    user = await repo.create_with_hash("a@b.com", "Ana", "senha123")
+    assert user.hashed_password != "senha123"
+    assert user.email == "a@b.com"
+    assert user.full_name == "Ana"

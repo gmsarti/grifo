@@ -1,0 +1,47 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Grifo - Login{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="font-fraunces font-bold text-xl tracking-tight uppercase">Login</h2>
+    <p class="font-lora text-sm text-coffee/60 mt-1 italic">Welcome back to the archives.</p>
+</div>
+
+{% if error %}
+<div class="bg-terracotta/10 border-l-2 border-terracotta p-3 mb-6">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-terracotta">{{ error }}</p>
+</div>
+{% endif %}
+
+{% if registered %}
+<div class="bg-sage/10 border-l-2 border-sage p-3 mb-6">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-sage">Conta criada com sucesso! Faça login abaixo.</p>
+</div>
+{% endif %}
+
+<form action="/web/login" method="post" class="space-y-6">
+    <div>
+        <label for="email" class="font-mono text-[10px] uppercase tracking-[0.2em] text-coffee/50 block mb-2">Email Address</label>
+        <input type="email" id="email" name="email" required
+            class="w-full bg-parchment/50 border border-coffee/10 p-3 font-lora text-sm focus:outline-none focus:border-coffee/30 transition-colors">
+    </div>
+    
+    <div>
+        <label for="password" class="font-mono text-[10px] uppercase tracking-[0.2em] text-coffee/50 block mb-2">Password</label>
+        <input type="password" id="password" name="password" required
+            class="w-full bg-parchment/50 border border-coffee/10 p-3 font-lora text-sm focus:outline-none focus:border-coffee/30 transition-colors">
+    </div>
+
+    <button type="submit" 
+        class="w-full bg-coffee text-parchment py-4 font-mono font-bold text-xs uppercase tracking-[0.3em] hover:bg-coffee/90 transition-colors">
+        Enter Library
+    </button>
+</form>
+
+<div class="mt-8 pt-6 border-t border-coffee/5 text-center">
+    <p class="font-mono text-[10px] uppercase tracking-widest text-coffee/40">
+        New researcher? <a href="/web/register" class="text-terracotta hover:underline">Register account</a>
+    </p>
+</div>
+{% endblock %}

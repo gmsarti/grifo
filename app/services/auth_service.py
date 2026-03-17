@@ -1,36 +1,6 @@
-from datetime import UTC, datetime, timedelta
-
-from jose import jwt
-from passlib.context import CryptContext
-
-from app.core.config import settings
+from app.core.security import verify_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(UTC) + expires_delta
-    else:
-        expire = datetime.now(UTC) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt
 
 
 class AuthService:
@@ -44,3 +14,10 @@ class AuthService:
         if not verify_password(password, user.hashed_password):
             return None
         return user
+
+    async def register(self, email: str, full_name: str, password: str) -> User:
+        existing_user = await self.user_repo.get_by_email(email)
+        if existing_user:
+            raise ValueError("Email já cadastrado")
+
+        return await self.user_repo.create_with_hash(email, full_name, password)

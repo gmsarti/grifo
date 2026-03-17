@@ -80,3 +80,32 @@ async def test_create_access_token():
 
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     assert payload["sub"] == "test@example.com"
+
+
+@pytest.mark.asyncio
+async def test_register_creates_user(mock_user_repo):
+    from app.services.auth_service import AuthService
+
+    mock_user_repo.get_by_email = AsyncMock(return_value=None)
+    mock_user_repo.create_with_hash = AsyncMock(return_value=MagicMock())
+
+    service = AuthService(mock_user_repo)
+    await service.register("a@b.com", "Ana", "senha123")
+
+    mock_user_repo.get_by_email.assert_called_once_with("a@b.com")
+    mock_user_repo.create_with_hash.assert_called_once_with(
+        "a@b.com", "Ana", "senha123"
+    )
+
+
+@pytest.mark.asyncio
+async def test_register_raises_if_email_exists(mock_user_repo):
+    from app.services.auth_service import AuthService
+
+    mock_user_repo.get_by_email = AsyncMock(
+        return_value=MagicMock()
+    )  # user already exists
+
+    service = AuthService(mock_user_repo)
+    with pytest.raises(ValueError, match="Email já cadastrado"):
+        await service.register("a@b.com", "Ana", "senha123")

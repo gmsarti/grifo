@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Grifo - Auth{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Lora:ital,wght@0,400..700;1,400..700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        parchment: '#F9F7F2',
+                        coffee: '#2C1E1A',
+                        terracotta: '#A34E39',
+                        sage: '#6B705C',
+                    },
+                    fontFamily: {
+                        fraunces: ['Fraunces', 'serif'],
+                        lora: ['Lora', 'serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-parchment text-coffee font-lora antialiased min-h-screen relative flex items-center justify-center p-4">
+    <div class="grain-overlay" aria-hidden="true"></div>
+    
+    <div class="relative z-10 w-full max-w-md">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 border border-coffee flex items-center justify-center mx-auto mb-4 bg-parchment">
+                <i data-lucide="library" class="w-8 h-8 text-coffee"></i>
+            </div>
+            <h1 class="font-fraunces font-bold text-3xl tracking-tight uppercase">Grifo</h1>
+            <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-coffee/50 mt-2">Digital Scriptorium</p>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-md border border-coffee/10 p-8 shadow-xl relative overflow-hidden">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <div class="text-center mt-8">
+            <p class="font-mono text-[10px] uppercase tracking-widest text-coffee/30">© 2026 Grifo Research Assistant</p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -14,7 +14,7 @@ def test_web_root_returns_base_template():
     response = client.get("/web/")
     assert response.status_code == 200
     assert "<!DOCTYPE html>" in response.text
-    assert "Agent Stack" in response.text
+    assert "Grifo" in response.text
 
 
 def test_static_files_accessible():

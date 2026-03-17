@@ -3,7 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.adapters.web.deps import get_current_web_user
 from app.core.db import get_db
+from app.models.user import User
 from app.repositories.chat_repository import ChatRepository
 from app.services.rag_service import RAGService
 from app.services.rag_service_facade import AgenticRAGController
@@ -20,7 +22,10 @@ def get_rag_service(db: AsyncSession = Depends(get_db)) -> RAGService:
 
 @router.get("/chat/{session_id}", response_class=HTMLResponse)
 async def get_chat_page(
-    request: Request, session_id: int, db: AsyncSession = Depends(get_db)
+    request: Request,
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_web_user),
 ):
     chat_repo = ChatRepository(db)
     session = await chat_repo.get_session_by_id(session_id)
@@ -33,7 +38,12 @@ async def get_chat_page(
 
     return templates.TemplateResponse(
         "pages/chat.html",
-        {"request": request, "session_id": session_id, "messages": messages},
+        {
+            "request": request,
+            "session_id": session_id,
+            "messages": messages,
+            "current_user": current_user,
+        },
     )
 
 
@@ -43,6 +53,7 @@ async def post_chat_message(
     session_id: int,
     message: str = Form(...),
     rag_service: RAGService = Depends(get_rag_service),
+    current_user: User = Depends(get_current_web_user),
 ):
     # 1. Process the message and get response
     # In a real HTMX flow, we might want to return the user message immediately

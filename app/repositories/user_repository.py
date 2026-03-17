@@ -3,6 +3,7 @@ from typing import TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.core.security import get_password_hash
 from app.models.base import Base
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
@@ -44,3 +45,14 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     async def get_by_email(self, email: str) -> User | None:
         result = await self.db.execute(select(User).filter(User.email == email))
         return result.scalars().first()
+
+    async def create_with_hash(self, email: str, full_name: str, password: str) -> User:
+        db_obj = User(
+            email=email,
+            full_name=full_name,
+            hashed_password=get_password_hash(password),
+        )
+        self.db.add(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+        return db_obj
