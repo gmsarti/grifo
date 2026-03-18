@@ -6,37 +6,40 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-blue.svg" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/FastAPI-0.115+-009688.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/HTMX-2.0-blue.svg" alt="HTMX">
   <img src="https://img.shields.io/badge/LangChain-latest-green.svg" alt="LangChain">
-  <img src="https://img.shields.io/badge/Streamlit-1.55-red.svg" alt="Streamlit">
   <img src="https://img.shields.io/badge/ChromaDB-latest-orange.svg" alt="ChromaDB">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License MIT">
 </p>
 
 > [!IMPORTANT]
-> **Status: Em desenvolvimento.**
-> As funcionalidades planejadas e as especificações detalhadas podem ser encontradas na pasta `specs/`
+> **Status: Em desenvolvimento ativo.**
+> Este projeto evoluiu de um protótipo Streamlit para uma aplicação web completa utilizando FastAPI e HTMX.
 
-Este repositório é uma implementação padrão de referência para aplicações de Agentes de IA baseada no padrão de **3 camadas (3-Tier Architecture)**. O objetivo é fornecer uma estrutura robusta, escalável e pronta para a era dos Agentes de IA (2024-2026).
+O **Grifo** é uma implementação de referência para sistemas de Agentes de IA baseada no padrão de **Arquitetura em 3 Camadas (3-Tier Architecture)**. Ele combina orquestração avançada de agentes com uma interface moderna e resiliente.
 
 ## 🚀 Funcionalidades Principais
 
-- 🧠 **Agente Reflexivo**: Orquestração de raciocínio avançado com ciclos de crítica e refinamento.
-- 📚 **RAG (Retrieval-Augmented Generation)**: Busca semântica eficiente utilizando ChromaDB.
-- 🛠️ **Ecossistema de Ferramentas**: Integração nativa com ferramentas e APIs externas.
-- 🖥️ **Interface Reativa (HTMX)**: Experiência SPA moderna com FastAPI + HTMX + Tailwind CSS.
-- 🏗️ **Arquitetura Clean/Hexagonal**: Desacoplamento estrito entre lógica de negócio, persistência e interfaces.
+- 🧠 **Agente Reflexivo**: Orquestração com ciclos de crítica e refinamento utilizando LangGraph.
+- 📚 **RAG (Retrieval-Augmented Generation)**: Busca semântica e gestão de documentos com ChromaDB.
+- 🖥️ **Interface Modern Scriptorium**: UI premium inspirada em estéticas clássicas, construída com HTMX, Tailwind CSS e foco em UX.
+- 🔐 **Autenticação Web**: Sistema de login e registro seguro utilizando Cookies HTTP-Only e JWT.
+- 📂 **Gestão de Documentos**: Upload, listagem e exclusão de documentos para alimentação do RAG.
+- 🛠️ **Ferramentas de Pesquisa**: Integração nativa com Tavily Search para buscas em tempo real.
+- 📊 **Observabilidade**: Rastreamento completo com LangSmith e logs estruturados.
 
 ## 🏗️ Arquitetura do Sistema
 
-O projeto segue princípios de **Clean Architecture**, dividindo o sistema em camadas concêntricas que protegem o domínio.
+O projeto segue os princípios de **Clean Architecture**, garantindo que o núcleo da lógica de IA seja independente de frameworks web ou bancos de dados.
 
 ```mermaid
 graph TD
     User((Usuário))
 
     subgraph "Adapters (Interfaces)"
-        Web[app/web/ - HTMX/HTML]
-        API[app/api/ - REST JSON]
+        Web[app/adapters/web/ - HTMX/HTML]
+        API[app/adapters/api/ - REST JSON]
     end
 
     subgraph "Application Layer"
@@ -46,7 +49,7 @@ graph TD
 
     subgraph "Domain & Persistence"
         Repos[app/repositories/ - Repository Pattern]
-        Models[app/models/ - SQLAlchemy]
+        Models[app/models/ - SQLAlchemy/AioSqlite]
         Schemas[app/schemas/ - Pydantic]
     end
 
@@ -64,56 +67,51 @@ graph TD
     RAGFacade --> IA
 ```
 
----
-
-## 📂 Estrutura do Projeto
-
-- **[app/core/](file:///home/gusarti/pessoal/code/agent-stack/app/core/)**: Configurações globais, segurança e dependências infra.
-- **[app/api/](file:///home/gusarti/pessoal/code/agent-stack/app/api/)**: Adaptadores REST que servem contratos em JSON.
-- **[app/web/](file:///home/gusarti/pessoal/code/agent-stack/app/web/)**: Adaptadores UI que servem fragmentos HTML para o HTMX.
-- **[app/services/](file:///home/gusarti/pessoal/code/agent-stack/app/services/)**: Orquestradores da lógica de negócio e Fachada de IA.
-- **[app/repositories/](file:///home/gusarti/pessoal/code/agent-stack/app/repositories/)**: Abstração da persistência (SQLAlchemy).
-- **[app/models/](file:///home/gusarti/pessoal/code/agent-stack/app/models/)**: Definições das entidades do banco de dados.
-- **[app/schemas/](file:///home/gusarti/pessoal/code/agent-stack/app/schemas/)**: Contratos de dados (Pydantic).
-- **[app/processing/](file:///home/gusarti/pessoal/code/agent-stack/app/processing/)**: O motor de IA, LangGraph e definições do Agente.
-- **[app/data_source/](file:///home/gusarti/pessoal/code/agent-stack/app/data_source/)**: Mecânica de RAG (loaders e vector_store).
-
 ## 🛠️ Como Rodar
 
 ### Pré-requisitos
 - Python 3.12+
-- Gerenciador de dependências [uv](https://github.com/astral-sh/uv) (recomendado) ou `pip`.
+- Gerenciador [uv](https://github.com/astral-sh/uv) (altamente recomendado).
 
 ### Instalação
 
 1. **Clone o repositório:**
-
    ```bash
-   git clone https://github.com/seu-usuario/projeto-grifo.git
-   cd projeto-grifo
+   git clone https://github.com/gmsarti/grifo.git
+   cd grifo
    ```
 
-2. **Configure o ambiente:**
-
+2. **Instale as dependências:**
    ```bash
-   # Usando uv (recomendado)
-   uv venv
-   source .venv/bin/activate  # Linux/macOS
    uv sync
    ```
 
-3. **Configuração de Variáveis:**
-
-   Crie um arquivo `.env` na raiz do projeto seguindo o modelo e adicione suas chaves de API:
+3. **Configure as variáveis de ambiente:**
+   Crie um arquivo `.env` baseado no exemplo abaixo:
    ```env
-   OPENAI_API_KEY=sua_chave_aqui
+   OPENAI_API_KEY=sk-...
+   TAVILY_API_KEY=tvly-...
+   MODEL_PROVIDER=openai
+   MODEL_REASONER=gpt-4o
+   MODEL_FAST=gpt-4o-mini
+   
+   # Opcional: LangSmith para observabilidade
+   LANGSMITH_TRACING=true
+   LANGSMITH_API_KEY=lsv2_pt_...
    ```
 
-4. **Execute a aplicação:**
-
+4. **Inicie a aplicação:**
    ```bash
-   streamlit run app/presentation/web_ui.py
+   uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
+   Acesse:
+   - Interface Web: [http://localhost:8000/web/](http://localhost:8000/web/)
+   - API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### Rodando Testes
+```bash
+uv run pytest
+```
 
 ---
 
@@ -123,6 +121,6 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ## 👤 Autor
 
-**Gustavo** - *AI Enthusiast & Developer*
+**Gustavo Sarti** - *AI Enthusiast & Developer*
 - LinkedIn: [@gmsarti](https://www.linkedin.com/in/gmsarti/)
 - GitHub: [@gmsarti](https://github.com/gmsarti)
