@@ -69,7 +69,7 @@ async def test_create_access_token():
     """
     from jose import jwt
 
-    from app.services.auth_service import create_access_token
+    from app.core.security import create_access_token
 
     data = {"sub": "test@example.com"}
     token = create_access_token(data)
