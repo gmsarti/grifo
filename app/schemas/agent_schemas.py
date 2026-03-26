@@ -28,10 +28,17 @@ class ReviseAnswer(AnswerQuestion):
 
 class ExtractedFact(BaseModel):
     fact: str = Field(
-        description="Fato claro, conciso e autossuficiente extraído da conversa (ex: 'O usuário prefere respostas curtas')."
+        description=(
+            "Fato que o usuário declarou ou afirmou diretamente na conversa. "
+            "Deve ser conciso, autossuficiente e ancorado em algo que o usuário disse explicitamente. "
+            "Exemplos válidos: 'Usuário mencionou que usa Python como linguagem favorita', "
+            "'Usuário disse que trabalha com Go no emprego', "
+            "'Usuário afirmou ter um projeto de IA chamado Grifo'. "
+            "NÃO escreva suposições como 'Usuário pode estar interessado em X' ou 'Possivelmente usa Y'."
+        )
     )
     topic: str = Field(
-        description="Tópico geral do fato (ex: 'Preferência do Usuário', 'Detalhes do Projeto', 'Tecnologias')."
+        description="Tópico geral do fato (ex: 'Preferência do Usuário', 'Interesse de Pesquisa', 'Contexto de Trabalho', 'Tecnologia/Ferramenta', 'Nível Técnico', 'Detalhes do Projeto')."
     )
 
 

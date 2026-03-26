@@ -74,9 +74,9 @@ class StoreMemoryManager:
         thread_id: str | None = None,
     ):
         """Saves a fact to the store, optionally scoped by thread."""
-        namespace = ["memories", user_id]
-        if thread_id:
-            namespace.append(thread_id)
+        namespace = (
+            ("memories", user_id, thread_id) if thread_id else ("memories", user_id)
+        )
 
         await self.store.aput(
             namespace=namespace, key=fact_key, value={"content": fact_value}
@@ -86,12 +86,12 @@ class StoreMemoryManager:
         self, user_id: str, thread_id: str | None = None
     ) -> list[dict]:
         """Lists all facts for a user/thread."""
-        namespace = ["memories", user_id]
-        if thread_id:
-            namespace.append(thread_id)
+        namespace = (
+            ("memories", user_id, thread_id) if thread_id else ("memories", user_id)
+        )
 
         try:
-            results = await self.store.asearch(tuple(namespace), query="")
+            results = await self.store.asearch(namespace, query="")
             return [{"fact": r.value["content"], "key": r.key} for r in results]
         except Exception:
             # Safe fallback if search is not supported or fails
@@ -99,12 +99,12 @@ class StoreMemoryManager:
 
     async def delete_thread_memory(self, user_id: str, thread_id: str):
         """Clears all facts for a specific thread."""
-        namespace = ["memories", user_id, thread_id]
+        namespace = ("memories", user_id, thread_id)
         try:
-            results = await self.store.asearch(tuple(namespace), query="")
+            results = await self.store.asearch(namespace, query="")
             if results:
                 for r in results:
-                    await self.store.adelete(tuple(namespace), r.key)
+                    await self.store.adelete(namespace, r.key)
         except Exception:
             pass
 
@@ -114,9 +114,8 @@ class StoreMemoryManager:
         Note: Current LangGraph BaseStore implementation for search depends on the backend.
         We expect the store to support search() natively if configured with indexing.
         """
-        # namespaces are lists of strings
         return await self.store.asearch(
-            ["memories", user_id],  # positional namespace (lista)
+            ("memories", user_id),
             query=query,
             limit=limit,
         )

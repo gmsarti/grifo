@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import langgraph; print\\(langgraph.__version__\\)\")",
+      "Bash(python -c \"from langgraph.store.memory import InMemoryStore; import inspect; print\\(inspect.signature\\(InMemoryStore.__init__\\)\\)\")",
+      "Bash(uv run:*)"
+    ]
+  }
+}
