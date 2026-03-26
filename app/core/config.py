@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
 
-    # Agent
+    # Agent Memory
     REFLEXION_MAX_ITERATIONS: int = 2
+    MEMORY_DB_PATH: str = "./data/grifo_memory.db"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

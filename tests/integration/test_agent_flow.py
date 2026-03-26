@@ -13,6 +13,7 @@ from app.schemas.agent_schemas import ExtractedFact, KnowledgeExtraction
 async def test_agent_orchestrator_initialization():
     # Use real objects here to pass ensure_valid_checkpointer
     orchestrator = AgentOrchestrator()
+    await orchestrator._ensure_initialized()
     assert orchestrator.graph is not None
     assert orchestrator.first_responder is not None
     assert orchestrator.revisor is not None
@@ -26,6 +27,7 @@ async def test_agent_process_message_mocked():
         mock_hist_instance.add_message = AsyncMock()
 
         orchestrator = AgentOrchestrator()
+        await orchestrator._ensure_initialized()
 
         # Mock the graph execution
         with patch.object(

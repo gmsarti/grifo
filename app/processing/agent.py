@@ -1,14 +1,15 @@
 import uuid
+from contextlib import AsyncExitStack
 from typing import Literal
 
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
-from langgraph.store.memory import InMemoryStore
+from langgraph.store.sqlite.aio import AsyncSqliteStore
 
 from app.core.config import settings
 from app.core.llm import get_fast_model, get_reasoner
@@ -57,23 +58,56 @@ class AgentOrchestrator:
     Includes observability (LangSmith) and cost tracking.
     """
 
-    def __init__(self, store: InMemoryStore | None = None):
+    def __init__(self, store: AsyncSqliteStore | None = None):
         self.fast_llm = get_fast_model()
         self.reasoner_llm = get_reasoner()
         self.tools = AGENT_TOOLS
         self.reflexion_tools = ToolNode([answer_question_tool, revise_answer_tool])
 
-        # Memory Components
-        self.checkpointer = MemorySaver()
-        self.store = store or InMemoryStore()
-        self.store_manager = StoreMemoryManager(self.store)
+        # State managed lazily in _ensure_initialized
+        self.store = store
+        self._exit_stack = AsyncExitStack()
+        self.checkpointer = None
+        self.store_manager = StoreMemoryManager(store) if store else None
+        self.graph = None
 
         # Initialize chains
         self.first_responder = get_first_responder(self.fast_llm)
         self.revisor = get_revisor(self.reasoner_llm)
         self.knowledge_extractor = get_knowledge_extractor(self.fast_llm)
 
+    async def _ensure_initialized(self):
+        """Lazily initializes async persistent components and compiles the graph."""
+        if self.graph is not None:
+            return
+
+        import os
+
+        db_dir = os.path.dirname(settings.MEMORY_DB_PATH)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+
+        # Persistent components (Managed by AsyncExitStack to ensure proper lifecycle)
+        if self.checkpointer is None:
+            self.checkpointer = await self._exit_stack.enter_async_context(
+                AsyncSqliteSaver.from_conn_string(settings.MEMORY_DB_PATH)
+            )
+
+        if self.store is None:
+            self.store = await self._exit_stack.enter_async_context(
+                AsyncSqliteStore.from_conn_string(settings.MEMORY_DB_PATH)
+            )
+            await self.store.setup()
+            self.store_manager = StoreMemoryManager(self.store)
+
         self.graph = self._create_graph()
+
+    async def close(self):
+        """Closes all persistent stores and released resources."""
+        await self._exit_stack.aclose()
+        self.checkpointer = None
+        self.store = None
+        self.graph = None
 
     def _create_graph(self):
         """Creates the LangGraph with checkpointer and store."""
@@ -94,7 +128,12 @@ class AgentOrchestrator:
 
         # O ciclo de reflexão agora termina na extração de conhecimento ao invés de END
         builder.add_conditional_edges(
-            "revise", self.event_loop, ["execute_tools", "extract_knowledge"]
+            "revise",
+            self.event_loop,
+            {
+                "execute_tools": "execute_tools",
+                "extract_knowledge": "extract_knowledge",
+            },
         )
         builder.add_edge("extract_knowledge", END)
 
@@ -231,6 +270,7 @@ class AgentOrchestrator:
         system_prompt: str | None = None,
     ) -> dict:
         """Processes a user message through the graph with monitoring."""
+        await self._ensure_initialized()
 
         # Usa um ID único por invocação no checkpointer para evitar que o
         # MemorySaver acumule tool_calls sem ToolMessages entre chamadas distintas.
