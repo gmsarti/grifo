@@ -41,6 +41,15 @@ dev = [
     "sqlalchemy[asyncio]>=2.0.48",
 ]
 
+[tool.uv]
+package = true
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[project.scripts]
+dev = "app.cli.dev:main"
+
 [tool.ruff]
 target-version = "py312"
 line-length = 88

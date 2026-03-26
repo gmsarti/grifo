@@ -91,7 +91,7 @@ class StoreMemoryManager:
             namespace.append(thread_id)
 
         try:
-            results = await self.store.asearch(namespace=namespace, query="")
+            results = await self.store.asearch(tuple(namespace), query="")
             return [{"fact": r.value["content"], "key": r.key} for r in results]
         except Exception:
             # Safe fallback if search is not supported or fails
@@ -101,10 +101,10 @@ class StoreMemoryManager:
         """Clears all facts for a specific thread."""
         namespace = ["memories", user_id, thread_id]
         try:
-            results = await self.store.asearch(namespace=namespace, query="")
+            results = await self.store.asearch(tuple(namespace), query="")
             if results:
                 for r in results:
-                    await self.store.adelete(namespace=namespace, key=r.key)
+                    await self.store.adelete(tuple(namespace), r.key)
         except Exception:
             pass
 

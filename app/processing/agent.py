@@ -160,8 +160,9 @@ class AgentOrchestrator:
         Node final que extrai fatos relevantes da interação atual e os
         salva na memória de longo prazo (StoreMemoryManager).
         """
-        configurable = config.get("configurable", {})
+        configurable = config.get("configurable", {}) if config else {}
         user_id = configurable.get("user_id", "default_user")
+        thread_id = configurable.get("user_thread_id", "default")
 
         with timed_process("Knowledge Extraction", logger):
             # Obtém as últimas interações (usuário + reflexão + IA)
@@ -171,8 +172,16 @@ class AgentOrchestrator:
             for m in recent_messages:
                 if isinstance(m, HumanMessage):
                     history_lines.append(f"Usuário: {m.content}")
-                elif isinstance(m, AIMessage) and m.content:
-                    history_lines.append(f"IA: {m.content}")
+                elif isinstance(m, AIMessage):
+                    if m.content:
+                        history_lines.append(f"IA: {m.content}")
+                    elif m.tool_calls:
+                        # A resposta fica em tool_calls[].args["answer"] (AnswerQuestion/ReviseAnswer)
+                        for tc in m.tool_calls:
+                            answer = tc.get("args", {}).get("answer")
+                            if answer:
+                                history_lines.append(f"IA: {answer}")
+                                break
 
             history_str = "\n".join(history_lines)
 
@@ -188,7 +197,7 @@ class AgentOrchestrator:
 
                             # Salva o aprendizado permanentemente no namespace do usuário
                             await self.store_manager.save_fact(
-                                user_id, fact_key, formatted_fact
+                                user_id, fact_key, formatted_fact, thread_id=thread_id
                             )
                             logger.info(
                                 f"Learned new fact for user {user_id}: {formatted_fact}"
@@ -219,12 +228,19 @@ class AgentOrchestrator:
         thread_id: str,
         project_id: str,
         user_id: str = "default_user",
-    ) -> str:
+        system_prompt: str | None = None,
+    ) -> dict:
         """Processes a user message through the graph with monitoring."""
+
+        # Usa um ID único por invocação no checkpointer para evitar que o
+        # MemorySaver acumule tool_calls sem ToolMessages entre chamadas distintas.
+        # A memória cross-turn é gerenciada pelo VectorizedMessageHistory.
+        invocation_id = f"{thread_id}_{uuid.uuid4().hex}"
 
         config = {
             "configurable": {
-                "thread_id": thread_id,
+                "thread_id": invocation_id,
+                "user_thread_id": thread_id,  # thread real do usuário para memória
                 "user_id": user_id,
                 "project_id": project_id,
             },
@@ -235,7 +251,14 @@ class AgentOrchestrator:
             },
         }
 
-        inputs = {"messages": [HumanMessage(content=message)]}
+        from langchain_core.messages import SystemMessage
+
+        messages = []
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+        messages.append(HumanMessage(content=message))
+
+        inputs = {"messages": messages}
 
         # 0. Set Log Context for automatic enrichment
         from app.core.logging import set_log_context
@@ -266,17 +289,33 @@ class AgentOrchestrator:
 
                 # Extract final AI Message and update history
                 if "messages" in result and len(result["messages"]) > 0:
+                    final_answer = None
                     final_ai_msg = None
+
+                    # The LLM is forced to use AnswerQuestion/ReviseAnswer tools,
+                    # so the answer lives in tool_calls[].args["answer"], not in content.
                     for msg in reversed(result["messages"]):
-                        if (
+                        if not (
                             isinstance(msg, AIMessage)
                             or type(msg).__name__ == "AIMessage"
-                        ) and msg.content:
+                        ):
+                            continue
+                        # Prefer plain content (fallback path)
+                        if msg.content:
+                            final_answer = msg.content
                             final_ai_msg = msg
                             break
+                        # Extract answer from tool call args
+                        if msg.tool_calls:
+                            args = msg.tool_calls[0].get("args", {})
+                            if "answer" in args:
+                                final_answer = args["answer"]
+                                final_ai_msg = msg  # noqa: F841
+                                break
 
-                    if final_ai_msg:
-                        await history_db.add_message(final_ai_msg)
+                    if final_answer is not None:
+                        answer_msg = AIMessage(content=final_answer)
+                        await history_db.add_message(answer_msg)
 
                         # Extract grounding metadata from ToolMessages
                         grounding = {
@@ -313,7 +352,7 @@ class AgentOrchestrator:
                                     continue
 
                         return {
-                            "response": final_ai_msg.content,
+                            "response": final_answer,
                             "project_id": project_id,
                             "thread_id": thread_id,
                             "iterations": sum(
@@ -334,7 +373,24 @@ class AgentOrchestrator:
                             ],
                         }
 
-                return {"response": "No response generated."}
+                return {
+                    "response": "No response generated.",
+                    "project_id": project_id,
+                    "thread_id": thread_id,
+                    "iterations": 0,
+                    "grounding_metadata": {
+                        "local_sources": [],
+                        "web_sources": [],
+                        "search_queries": [],
+                    },
+                    "process_trace": [],
+                    "usage": {
+                        "total_tokens": cb.total_tokens,
+                        "prompt_tokens": cb.prompt_tokens,
+                        "completion_tokens": cb.completion_tokens,
+                        "total_cost": cb.total_cost,
+                    },
+                }
             except Exception as e:
                 logger.error(f"Error processing message: {str(e)}")
                 return {"error": str(e)}

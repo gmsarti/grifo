@@ -1,23 +1,34 @@
 import shutil
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.db import get_db
 from app.data_source.vector_store import VectorStoreManager
 from app.processing.agent import AgentOrchestrator
+from app.repositories.project_repository import ProjectRepository
 
-# Inicializamos o FastAPI
-app = FastAPI(title="Agente Grifo", version="0.1.0")
+router = APIRouter()
+
+# Singletons — garante que o InMemoryStore e o MemorySaver persistam entre requests
+_orchestrator: AgentOrchestrator | None = None
+_vector_store: VectorStoreManager | None = None
 
 
-# Dependency functions
-def get_orchestrator():
-    return AgentOrchestrator()
+def get_orchestrator() -> AgentOrchestrator:
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = AgentOrchestrator()
+    return _orchestrator
 
 
-def get_vector_store():
-    return VectorStoreManager()
+def get_vector_store() -> VectorStoreManager:
+    global _vector_store
+    if _vector_store is None:
+        _vector_store = VectorStoreManager()
+    return _vector_store
 
 
 # Modelos Pydantic para os Endpoints
@@ -63,20 +74,30 @@ class UrlRequest(BaseModel):
     url: str
 
 
-@app.post("/api/v1/chat", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(
-    request: ChatRequest, orchestrator: AgentOrchestrator = Depends(get_orchestrator)
+    request: ChatRequest,
+    orchestrator: AgentOrchestrator = Depends(get_orchestrator),
+    db: AsyncSession = Depends(get_db),
 ):
-    """
-    Endpoint principal. Suporta fluxo de reflexão e busca híbrida.
-    """
+    # Busca o system_prompt do projeto, se project_id for numérico
+    system_prompt: str | None = None
     try:
-        # Passa os identificadores hierárquicos para o orquestrador
+        project_id_int = int(request.project_id)
+        project_repo = ProjectRepository(db)
+        project = await project_repo.get_by_id(project_id_int)
+        if project:
+            system_prompt = project.system_prompt or None
+    except (ValueError, TypeError):
+        pass  # project_id não numérico (ex: "default") — sem system_prompt
+
+    try:
         result = await orchestrator.process_message(
             message=request.message,
             thread_id=request.thread_id,
             project_id=request.project_id,
             user_id=request.user_id,
+            system_prompt=system_prompt,
         )
 
         if "error" in result:
@@ -89,14 +110,11 @@ async def chat_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/ingest/upload")
+@router.post("/ingest/upload")
 async def upload_file(
     file: UploadFile = File(...),
     vector_store: VectorStoreManager = Depends(get_vector_store),
 ):
-    """
-    Processa e armazena arquivos locais usando pathlib para gestão de diretórios.
-    """
     temp_dir = Path("/tmp/grifo_ingestion")
     temp_dir.mkdir(parents=True, exist_ok=True)
     temp_path = temp_dir / file.filename
@@ -105,7 +123,6 @@ async def upload_file(
         with temp_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # O VectorStoreManager agora recebe a string do caminho
         vector_store.ingest_file(str(temp_path))
 
         return {"status": "success", "filename": file.filename}
@@ -116,13 +133,10 @@ async def upload_file(
             temp_path.unlink()
 
 
-@app.post("/api/v1/ingest/url")
+@router.post("/ingest/url")
 async def ingest_url(
     request: UrlRequest, vector_store: VectorStoreManager = Depends(get_vector_store)
 ):
-    """
-    Processa e armazena conteúdo de uma URL.
-    """
     try:
         vector_store.ingest_url(request.url)
         return {"status": "success", "url": request.url}
@@ -130,17 +144,12 @@ async def ingest_url(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/documents")
+@router.get("/documents")
 async def list_documents(
     project_id: str | None = "default",
     vector_store: VectorStoreManager = Depends(get_vector_store),
 ):
-    """
-    Retorna a lista de documentos (fontes) ingeridos no sistema.
-    Opcionalmente filtrado por projeto.
-    """
     try:
-        # Se o projeto for diferente do atual, criamos um manager temporário
         manager = vector_store
         if project_id != vector_store.project_id:
             manager = VectorStoreManager(project_id=project_id)
@@ -151,15 +160,12 @@ async def list_documents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/documents/{doc_id:path}")
+@router.delete("/documents/{doc_id:path}")
 async def delete_document(
     doc_id: str,
     project_id: str = "default",
     vector_store: VectorStoreManager = Depends(get_vector_store),
 ):
-    """
-    Remove um documento do Vector Store por ID (caminho/URL).
-    """
     try:
         manager = vector_store
         if project_id != vector_store.project_id:
@@ -171,15 +177,12 @@ async def delete_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/memory/{thread_id}/facts")
+@router.get("/memory/{thread_id}/facts")
 async def get_thread_facts(
     thread_id: str,
     user_id: str = "default_user",
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
 ):
-    """
-    Recupera fatos e preferências da memória de longo prazo.
-    """
     try:
         facts = await orchestrator.store_manager.list_facts(user_id, thread_id)
         return {"status": "success", "thread_id": thread_id, "facts": facts}
@@ -187,24 +190,19 @@ async def get_thread_facts(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/v1/memory/{thread_id}")
+@router.delete("/memory/{thread_id}")
 async def delete_thread_memory(
     thread_id: str,
     project_id: str = "default",
     user_id: str = "default_user",
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
 ):
-    """
-    Limpa o histórico de chat e os fatos da thread.
-    """
     try:
-        # 1. Limpa histórico vetorizado
         from app.processing.memory import VectorizedMessageHistory
 
         history = VectorizedMessageHistory(project_id, thread_id)
         history.delete_history()
 
-        # 2. Limpa fatos no Store
         await orchestrator.store_manager.delete_thread_memory(user_id, thread_id)
 
         return {"status": "success", "message": f"Memória da thread {thread_id} limpa."}
