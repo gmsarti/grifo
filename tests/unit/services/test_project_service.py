@@ -1,9 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 
-
-@pytest.mark.asyncio
 async def test_get_projects_for_user():
     """
     Detailed:
@@ -28,7 +25,6 @@ async def test_get_projects_for_user():
     mock_repo.get_by_owner.assert_called_once_with(1)
 
 
-@pytest.mark.asyncio
 async def test_ensure_default_project_exists():
     """
     Test "Default Workspace" logic.
@@ -53,7 +49,6 @@ async def test_ensure_default_project_exists():
     assert args[0].owner_id == 1
 
 
-@pytest.mark.asyncio
 async def test_ensure_default_project_already_exists():
     """
     - Given a user with existing projects

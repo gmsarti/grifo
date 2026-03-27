@@ -1,20 +1,4 @@
-from unittest.mock import patch
-
-import pytest
 from langchain_core.documents import Document
-
-from app.data_source.vector_store import VectorStoreManager
-
-
-@pytest.fixture
-def vector_manager():
-    with (
-        patch("app.data_source.vector_store.Chroma"),
-        patch("app.data_source.vector_store.OpenAIEmbeddings"),
-        patch("app.data_source.vector_store.HybridRetriever"),
-    ):
-        vm = VectorStoreManager()
-        yield vm
 
 
 def test_bm25_retrieval(vector_manager):

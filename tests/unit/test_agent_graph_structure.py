@@ -1,10 +1,8 @@
-import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
 from app.processing.agent import AgentOrchestrator
 
 
-@pytest.mark.anyio
 async def test_graph_structure():
     orchestrator = AgentOrchestrator()
     await orchestrator._ensure_initialized()

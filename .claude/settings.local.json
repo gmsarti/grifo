@@ -3,7 +3,19 @@
     "allow": [
       "Bash(python -c \"import langgraph; print\\(langgraph.__version__\\)\")",
       "Bash(python -c \"from langgraph.store.memory import InMemoryStore; import inspect; print\\(inspect.signature\\(InMemoryStore.__init__\\)\\)\")",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(python -m pytest tests/unit/ tests/integration/ tests/web/ --tb=short -q)",
+      "Bash(python3.11 -m pytest tests/unit/ tests/integration/ tests/web/ --tb=short -q)",
+      "Bash(ls .venv/bin/python*)",
+      "Bash(find . -name python* -path */bin/*)",
+      "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ tests/web/ --tb=short -q)",
+      "Bash(.venv/bin/python -m pytest tests/unit/repositories/ -v --tb=short 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/unit/test_agent.py tests/integration/test_agent_flow.py tests/integration/test_memory_persistence.py -v --tb=short 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/unit/test_bm25.py tests/unit/test_bm25_rebuild.py tests/unit/test_hybrid.py tests/integration/test_e2e_demo.py tests/integration/test_vector_ingestion.py -v --tb=short 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/integration/api/ -v --tb=short 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ tests/web/ --collect-only -q)",
+      "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ tests/web/ -q --tb=short)",
+      "Bash(.venv/bin/python -m pytest tests/api/ tests/web/ -v --tb=short 2>&1)"
     ]
   }
 }

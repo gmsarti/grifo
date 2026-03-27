@@ -1,15 +1,9 @@
 import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
 
 
-def test_chat_v1_endpoint_structure():
+async def test_chat_v1_endpoint_structure(client):
     """
     Verifies that the /api/v1/chat endpoint returns the expected JSON structure.
-    Uses a mock message to avoid real LLM calls if possible, or just checks the response.
     Note: Real LLM calls might be triggered if not mocked.
     """
     payload = {
@@ -20,13 +14,8 @@ def test_chat_v1_endpoint_structure():
         "config": {"mode": "fast", "web_search": False},
     }
 
-    # We might need to mock AgentOrchestrator.process_message to avoid real costs/latency
-    # but for a quick structure check, let's see if it at least accepts the request.
+    response = await client.post("/api/v1/chat", json=payload)
 
-    response = client.post("/api/v1/chat", json=payload)
-
-    # If the API is working, it should return 200 or 500 (if LLM fails but route is fine)
-    # We check if the models are correctly validated by FastAPI
     if response.status_code == 200:
         data = response.json()
         assert "response" in data
@@ -39,8 +28,7 @@ def test_chat_v1_endpoint_structure():
         pytest.fail(f"Validation error: {response.text}")
 
 
-def test_chat_v1_missing_required_fields():
+async def test_chat_v1_missing_required_fields(client):
     """Checks that missing project_id or thread_id returns 422."""
-    payload = {"message": "Hello"}
-    response = client.post("/api/v1/chat", json=payload)
+    response = await client.post("/api/v1/chat", json={"message": "Hello"})
     assert response.status_code == 422

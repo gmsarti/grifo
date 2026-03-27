@@ -1,9 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 
-
-@pytest.mark.asyncio
 async def test_rag_service_chat_flow():
     """
     Detailed:

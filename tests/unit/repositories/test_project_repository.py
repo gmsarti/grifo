@@ -1,31 +1,6 @@
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# These will fail initially (Red Phase)
-# from app.repositories.project_repository import ProjectRepository
-# from app.schemas.project import ProjectCreate
-# from app.models.user import User
 
-
-@pytest.fixture
-async def test_user(db_session: AsyncSession, request):
-    import uuid
-
-    from app.models.user import User
-
-    email = f"owner_{uuid.uuid4()}@example.com"
-    user = User(
-        email=email,
-        hashed_password="hashed_password",
-        full_name="Owner",
-    )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
-    return user
-
-
-@pytest.mark.asyncio
 async def test_create_project(db_session: AsyncSession, test_user):
     """
     Test individual project creation in the repository.
@@ -49,7 +24,6 @@ async def test_create_project(db_session: AsyncSession, test_user):
     assert project.owner_id == test_user.id
 
 
-@pytest.mark.asyncio
 async def test_get_projects_by_owner(db_session: AsyncSession, test_user):
     """
     Test retrieving all projects for a specific owner.
@@ -67,7 +41,6 @@ async def test_get_projects_by_owner(db_session: AsyncSession, test_user):
     assert any(p.name == "P2" for p in projects)
 
 
-@pytest.mark.asyncio
 async def test_update_project(db_session: AsyncSession, test_user):
     """
     Test updating project metadada/system prompt.

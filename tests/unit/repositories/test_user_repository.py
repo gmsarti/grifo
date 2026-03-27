@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # from app.schemas.user import UserCreate
 
 
-@pytest.mark.asyncio
 async def test_create_user(db_session: AsyncSession):
     """
     Test individual user creation in the repository.
@@ -30,7 +29,6 @@ async def test_create_user(db_session: AsyncSession):
     assert user.full_name == "Test User"
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_email(db_session: AsyncSession):
     """
     Test retrieving a user by email.
@@ -47,7 +45,6 @@ async def test_get_user_by_email(db_session: AsyncSession):
     assert found_user.email == "findme@example.com"
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_id(db_session: AsyncSession):
     """
     Test retrieving a user by ID.
@@ -64,7 +61,6 @@ async def test_get_user_by_id(db_session: AsyncSession):
     assert found_user.id == created_user.id
 
 
-@pytest.mark.asyncio
 async def test_duplicate_email_raises_error(db_session: AsyncSession):
     """
     Ensure that creating a user with an existing email fails.
@@ -83,7 +79,6 @@ async def test_duplicate_email_raises_error(db_session: AsyncSession):
         await repo.create(user_in)
 
 
-@pytest.mark.asyncio
 async def test_create_user_with_hash_stores_hashed_password(db_session: AsyncSession):
     """
     Test individual user creation in the repository using password hashing.

@@ -1,24 +1,3 @@
-import pytest
-
-
-@pytest.fixture
-async def auth_token(client):
-    """
-    Returns an auth token for a registered user.
-    """
-    email = "project_api@example.com"
-    password = "password123"
-    await client.post(
-        "/api/auth/register",
-        json={"email": email, "password": password, "full_name": "API User"},
-    )
-    response = await client.post(
-        "/api/auth/token", data={"username": email, "password": password}
-    )
-    return response.json()["access_token"]
-
-
-@pytest.mark.asyncio
 async def test_create_project_api(client, auth_token):
     """
     Test project creation via API.
@@ -35,7 +14,6 @@ async def test_create_project_api(client, auth_token):
     assert "id" in data
 
 
-@pytest.mark.asyncio
 async def test_list_projects_api(client, auth_token):
     """
     Test listing projects via API.
@@ -57,20 +35,19 @@ async def test_list_projects_api(client, auth_token):
     assert any(p["name"] == "Project Alpha" for p in data)
 
 
-@pytest.mark.asyncio
 async def test_unauthorized_access(client):
     response = await client.get("/api/projects/")
     assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_create_project_ignores_client_owner_id(client, auth_token, db_session):
     """
     Test that the API ignores an owner_id sent by the client and forces it
     to be the ID of the authenticated user (prevents ID spoofing).
     """
-    from app.models.user import User
     from sqlalchemy import select
+
+    from app.models.user import User
 
     # Create another user to try spoofing their ID
     other_user = User(
@@ -94,7 +71,7 @@ async def test_create_project_ignores_client_owner_id(client, auth_token, db_ses
 
     # Get current user ID
     res = await db_session.execute(
-        select(User).where(User.email == "project_api@example.com")
+        select(User).where(User.email == "integration_user@example.com")
     )
     current_user = res.scalar_one()
 

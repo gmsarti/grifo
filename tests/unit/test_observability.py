@@ -3,8 +3,6 @@ import logging
 from io import StringIO
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.core.logging import JsonFormatter, timed_process
 from app.processing.agent import AgentOrchestrator
 
@@ -57,7 +55,6 @@ def test_timed_process_logging():
     assert "duration_seconds" in end_log
 
 
-@pytest.mark.asyncio
 async def test_agent_process_message_metadata():
     with (
         patch("app.processing.agent.VectorizedMessageHistory") as mock_hist_class,

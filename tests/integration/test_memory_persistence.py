@@ -8,7 +8,6 @@ Critério de aceite:
 
 from unittest.mock import patch
 
-import pytest
 from langgraph.store.sqlite.aio import AsyncSqliteStore
 
 from app.processing.agent import AgentOrchestrator
@@ -17,7 +16,6 @@ from app.processing.memory import StoreMemoryManager
 # ── Nível de store (AsyncSqliteStore + StoreMemoryManager) ────────────────────
 
 
-@pytest.mark.asyncio
 async def test_facts_persist_after_store_restart(tmp_path):
     """
     Fatos salvos por uma instância do AsyncSqliteStore devem ser acessíveis
@@ -43,7 +41,6 @@ async def test_facts_persist_after_store_restart(tmp_path):
     assert keys == {"k1", "k2"}
 
 
-@pytest.mark.asyncio
 async def test_facts_scoped_by_thread_persist_after_restart(tmp_path):
     """
     Fatos com thread_id também devem persistir, mantendo o namespace correto.
@@ -66,7 +63,6 @@ async def test_facts_scoped_by_thread_persist_after_restart(tmp_path):
     assert keys == {"k1", "k2"}
 
 
-@pytest.mark.asyncio
 async def test_user_namespaces_are_isolated_after_restart(tmp_path):
     """
     Fatos de usuários distintos não devem se misturar após restart.
@@ -94,7 +90,6 @@ async def test_user_namespaces_are_isolated_after_restart(tmp_path):
 # ── Nível de AgentOrchestrator ────────────────────────────────────────────────
 
 
-@pytest.mark.asyncio
 async def test_orchestrator_uses_async_sqlite_store_by_default(tmp_path):
     """
     AgentOrchestrator sem store explícito deve criar um AsyncSqliteStore
@@ -116,7 +111,6 @@ async def test_orchestrator_uses_async_sqlite_store_by_default(tmp_path):
             await orchestrator.close()
 
 
-@pytest.mark.asyncio
 async def test_orchestrator_memory_persists_between_instances(tmp_path):
     """
     Fatos salvos por uma instância do AgentOrchestrator devem ser acessíveis

@@ -1,12 +1,13 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.data_source.vector_store import VectorStoreManager
 from app.models.base import Base
-from app.models.chat import Message, Session
-from app.models.project import Project
-from app.models.user import User
+from app.processing.memory import VectorizedMessageHistory
 
 
 @pytest.fixture(scope="session")
@@ -35,8 +36,8 @@ async def engine():
 
 @pytest.fixture
 async def client(db_session: AsyncSession):
-    from app.main import app
     from app.core.db import get_db
+    from app.main import app
 
     async def override_get_db():
         yield db_session
@@ -60,3 +61,23 @@ async def db_session(engine):
         yield session
         # Rollback after each test to keep it clean
         await session.rollback()
+
+
+@pytest.fixture
+def mock_history_db():
+    db = MagicMock(spec=VectorizedMessageHistory)
+    db.search_history.return_value = ""
+    db.add_message = AsyncMock()
+    return db
+
+
+@pytest.fixture
+def vector_manager():
+    """VectorStoreManager com Chroma, OpenAIEmbeddings e HybridRetriever mockados."""
+    with (
+        patch("app.data_source.vector_store.Chroma"),
+        patch("app.data_source.vector_store.OpenAIEmbeddings"),
+        patch("app.data_source.vector_store.HybridRetriever"),
+    ):
+        vm = VectorStoreManager()
+        yield vm

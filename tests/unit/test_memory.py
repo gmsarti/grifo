@@ -1,13 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from langchain_core.messages import HumanMessage
 from langgraph.store.memory import InMemoryStore
 
 from app.processing.memory import StoreMemoryManager, VectorizedMessageHistory
 
 
-@pytest.mark.asyncio
 async def test_vectorized_history_add_and_search():
     thread_id = "test_thread_123"
 
@@ -34,7 +32,6 @@ async def test_vectorized_history_add_and_search():
 # ── save_fact ────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.asyncio
 async def test_save_fact_uses_tuple_namespace():
     """save_fact deve passar namespace como tupla — list causa TypeError no InMemoryStore."""
     mock_store = AsyncMock(spec=InMemoryStore)
@@ -52,7 +49,6 @@ async def test_save_fact_uses_tuple_namespace():
     assert kwargs["namespace"] == ("memories", "user1")
 
 
-@pytest.mark.asyncio
 async def test_save_fact_with_thread_id_uses_tuple_namespace():
     """Quando thread_id é fornecido, namespace ainda deve ser tuple."""
     mock_store = AsyncMock(spec=InMemoryStore)
@@ -65,7 +61,6 @@ async def test_save_fact_with_thread_id_uses_tuple_namespace():
     assert kwargs["namespace"] == ("memories", "user1", "thread1")
 
 
-@pytest.mark.asyncio
 async def test_save_fact_without_thread_id_excludes_thread_from_namespace():
     mock_store = AsyncMock(spec=InMemoryStore)
     manager = StoreMemoryManager(mock_store)
@@ -80,7 +75,6 @@ async def test_save_fact_without_thread_id_excludes_thread_from_namespace():
 # ── search_memories ───────────────────────────────────────────────────────────
 
 
-@pytest.mark.asyncio
 async def test_search_memories_uses_tuple_namespace():
     """search_memories deve passar namespace como tupla para asearch."""
     mock_store = AsyncMock(spec=InMemoryStore)
@@ -101,7 +95,6 @@ async def test_search_memories_uses_tuple_namespace():
     assert namespace == ("memories", "user1")
 
 
-@pytest.mark.asyncio
 async def test_search_memories_passes_query_and_limit():
     mock_store = AsyncMock(spec=InMemoryStore)
     mock_store.asearch = AsyncMock(return_value=[])
@@ -119,7 +112,6 @@ async def test_search_memories_passes_query_and_limit():
 # ── integração com InMemoryStore real ────────────────────────────────────────
 
 
-@pytest.mark.asyncio
 async def test_save_and_retrieve_with_real_store():
     """Com InMemoryStore real, fatos salvos devem ser encontrados por search_memories."""
     store = InMemoryStore()
@@ -141,7 +133,6 @@ async def test_save_and_retrieve_with_real_store():
     assert any("Python" in c for c in contents)
 
 
-@pytest.mark.asyncio
 async def test_save_fact_not_visible_to_other_users():
     """Fatos de um usuário não devem aparecer na busca de outro."""
     store = InMemoryStore()
@@ -153,7 +144,6 @@ async def test_save_fact_not_visible_to_other_users():
     assert len(results) == 0
 
 
-@pytest.mark.asyncio
 async def test_list_facts_returns_saved_facts():
     """list_facts deve retornar todos os fatos salvos para o usuário/thread."""
     store = InMemoryStore()
@@ -173,7 +163,6 @@ async def test_list_facts_returns_saved_facts():
     assert "fact content B" in contents
 
 
-@pytest.mark.asyncio
 async def test_list_facts_empty_when_no_facts():
     store = InMemoryStore()
     manager = StoreMemoryManager(store)
@@ -182,7 +171,6 @@ async def test_list_facts_empty_when_no_facts():
     assert facts == []
 
 
-@pytest.mark.asyncio
 async def test_delete_thread_memory_removes_facts():
     store = InMemoryStore()
     manager = StoreMemoryManager(store)
@@ -197,7 +185,6 @@ async def test_delete_thread_memory_removes_facts():
 # ── teste legado (mantido para compatibilidade) ───────────────────────────────
 
 
-@pytest.mark.asyncio
 async def test_store_memory_manager():
     mock_store = AsyncMock(spec=InMemoryStore)
     manager = StoreMemoryManager(mock_store)

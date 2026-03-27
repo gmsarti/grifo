@@ -1,21 +1,8 @@
 from unittest.mock import AsyncMock, patch
 
-import pytest
-from httpx import ASGITransport, AsyncClient
-
-from app.main import app
 from app.models.user import User
 
 
-@pytest.fixture
-async def client():
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        yield ac
-
-
-@pytest.mark.asyncio
 async def test_get_login_page(client):
     response = await client.get("/web/login")
     assert response.status_code == 200
@@ -24,7 +11,6 @@ async def test_get_login_page(client):
     assert 'name="password"' in response.text
 
 
-@pytest.mark.asyncio
 async def test_get_register_page(client):
     response = await client.get("/web/register")
     assert response.status_code == 200
@@ -33,7 +19,6 @@ async def test_get_register_page(client):
     assert 'name="email"' in response.text
 
 
-@pytest.mark.asyncio
 async def test_post_login_success(client):
     mock_user = User(email="a@b.com", full_name="Ana", hashed_password="hashed")
 
@@ -55,7 +40,6 @@ async def test_post_login_success(client):
             assert "access_token=fake-token" in response.headers["set-cookie"]
 
 
-@pytest.mark.asyncio
 async def test_post_login_failure(client):
     with patch("app.adapters.web.routes.auth.AuthService") as MockService:
         service_instance = MockService.return_value
@@ -70,7 +54,6 @@ async def test_post_login_failure(client):
         assert "Email ou senha inválidos" in response.text
 
 
-@pytest.mark.asyncio
 async def test_post_register_success(client):
     with patch("app.adapters.web.routes.auth.AuthService") as MockService:
         service_instance = MockService.return_value
@@ -92,7 +75,6 @@ async def test_post_register_success(client):
         service_instance.register.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_post_logout(client):
     response = await client.post("/web/logout", follow_redirects=False)
     assert response.status_code == 303
@@ -101,7 +83,6 @@ async def test_post_logout(client):
     assert "Max-Age=0" in response.headers["set-cookie"]
 
 
-@pytest.mark.asyncio
 async def test_chat_unauthenticated_redirect(client):
     # This assumes we have protected the route
     response = await client.get("/web/chat/1", follow_redirects=False)

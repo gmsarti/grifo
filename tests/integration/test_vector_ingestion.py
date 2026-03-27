@@ -1,20 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
 from langchain_core.documents import Document
-
-from app.data_source.vector_store import VectorStoreManager
-
-
-@pytest.fixture
-def vector_manager():
-    with (
-        patch("app.data_source.vector_store.Chroma"),
-        patch("app.data_source.vector_store.OpenAIEmbeddings"),
-        patch("app.data_source.vector_store.HybridRetriever"),
-    ):
-        vm = VectorStoreManager()
-        yield vm
 
 
 @patch("app.data_source.loaders.FileIngestionService.process_file")

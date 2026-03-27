@@ -21,13 +21,11 @@ def mock_request():
     return request
 
 
-@pytest.mark.asyncio
 async def test_get_optional_user_returns_none_without_cookie(mock_request, mock_db):
     user = await get_optional_current_web_user(mock_request, mock_db)
     assert user is None
 
 
-@pytest.mark.asyncio
 async def test_get_optional_user_returns_user_with_valid_cookie(mock_request, mock_db):
     from unittest.mock import patch
 
@@ -48,21 +46,18 @@ async def test_get_optional_user_returns_user_with_valid_cookie(mock_request, mo
         repo_instance.get_by_email.assert_called_once_with(email)
 
 
-@pytest.mark.asyncio
 async def test_get_optional_user_returns_none_with_invalid_token(mock_request, mock_db):
     mock_request.cookies = {"access_token": "invalid-token"}
     user = await get_optional_current_web_user(mock_request, mock_db)
     assert user is None
 
 
-@pytest.mark.asyncio
 async def test_get_current_web_user_returns_user_if_present():
     mock_user = MagicMock()
     user = await get_current_web_user(mock_user)
     assert user == mock_user
 
 
-@pytest.mark.asyncio
 async def test_get_current_web_user_raises_redirect_if_none():
     with pytest.raises(HTTPException) as excinfo:
         await get_current_web_user(None)

@@ -1,7 +1,3 @@
-import pytest
-
-
-@pytest.mark.asyncio
 async def test_register_user_integration(client):
     """
     Test user registration via API.
@@ -21,7 +17,6 @@ async def test_register_user_integration(client):
     assert "id" in data
 
 
-@pytest.mark.asyncio
 async def test_login_user_integration(client):
     """
     Test user login and token acquisition.
@@ -47,7 +42,6 @@ async def test_login_user_integration(client):
     assert data["token_type"] == "bearer"
 
 
-@pytest.mark.asyncio
 async def test_login_invalid_credentials(client):
     response = await client.post(
         "/api/auth/token",

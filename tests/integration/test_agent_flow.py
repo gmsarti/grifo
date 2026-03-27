@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.store.memory import InMemoryStore
 
@@ -9,7 +8,6 @@ from app.processing.memory import StoreMemoryManager
 from app.schemas.agent_schemas import ExtractedFact, KnowledgeExtraction
 
 
-@pytest.mark.asyncio
 async def test_agent_orchestrator_initialization():
     # Use real objects here to pass ensure_valid_checkpointer
     orchestrator = AgentOrchestrator()
@@ -19,7 +17,6 @@ async def test_agent_orchestrator_initialization():
     assert orchestrator.revisor is not None
 
 
-@pytest.mark.asyncio
 async def test_agent_process_message_mocked():
     with patch("app.processing.agent.VectorizedMessageHistory") as mock_hist_class:
         # Correctly mock the instance methods
@@ -54,7 +51,6 @@ async def test_agent_process_message_mocked():
             mock_hist_instance.add_message.assert_called()
 
 
-@pytest.mark.asyncio
 async def test_knowledge_saved_to_real_store_after_extraction():
     """
     Integração: extract_knowledge_node deve salvar fatos no InMemoryStore real.
@@ -83,8 +79,7 @@ async def test_knowledge_saved_to_real_store_after_extraction():
     assert "LLMs" in all_contents or "LangChain" in all_contents
 
 
-@pytest.mark.asyncio
-async def test_knowledge_retrieved_on_next_message():
+async def test_knowledge_retrieved_on_next_message(mock_history_db):
     """
     Integração completa: fatos extraídos na primeira mensagem devem ser
     recuperados e injetados no contexto da segunda mensagem.
@@ -114,10 +109,6 @@ async def test_knowledge_retrieved_on_next_message():
             ]
         )
     )
-
-    mock_history_db = MagicMock()
-    mock_history_db.search_history.return_value = ""
-    mock_history_db.add_message = AsyncMock()
 
     with (
         patch("app.processing.agent.get_first_responder"),
@@ -171,8 +162,7 @@ async def test_knowledge_retrieved_on_next_message():
         )
 
 
-@pytest.mark.asyncio
-async def test_researcher_profile_propagates_to_draft():
+async def test_researcher_profile_propagates_to_draft(mock_history_db):
     """
     Integração: fatos sobre o pesquisador salvos no store devem aparecer
     no contexto do draft_node na próxima mensagem.
@@ -213,10 +203,6 @@ async def test_researcher_profile_propagates_to_draft():
     )
     mock_extract = MagicMock()
     mock_extract.ainvoke = AsyncMock(return_value=KnowledgeExtraction(facts=[]))
-
-    mock_history_db = MagicMock()
-    mock_history_db.search_history.return_value = ""
-    mock_history_db.add_message = AsyncMock()
 
     with (
         patch("app.processing.agent.get_first_responder", return_value=mock_draft),
@@ -267,7 +253,6 @@ async def test_researcher_profile_propagates_to_draft():
         )
 
 
-@pytest.mark.asyncio
 async def test_tool_executor_crag_flow():
     # This test verifies the logic in tool_executor's run_queries
     from app.processing.tool_executor import run_queries

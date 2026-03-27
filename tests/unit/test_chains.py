@@ -11,6 +11,16 @@ from app.processing.chains import (
 from app.schemas.agent_schemas import AnswerQuestion, KnowledgeExtraction, ReviseAnswer
 
 
+def test_actor_prompt_template_partial():
+    """Verifica que o placeholder {time} é substituído por um valor real no momento da invocação."""
+    from app.processing.chains import actor_prompt_template
+
+    prompt = actor_prompt_template.invoke({"messages": [], "first_instruction": "test"})
+    system_msg = prompt.messages[0].content
+    assert "Current time:" in system_msg
+    assert "{time}" not in system_msg
+
+
 def test_get_first_responder():
     mock_llm = MagicMock()
     chain = get_first_responder(mock_llm)

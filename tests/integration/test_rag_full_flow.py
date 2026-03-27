@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
@@ -9,7 +8,6 @@ from app.processing.rag.graph import create_rag_graph
 from app.services.rag_service_facade import AgenticRAGController
 
 
-@pytest.mark.asyncio
 async def test_rag_controller_integration():
     """
     Test the full CRAG flow via the controller with mocks.
@@ -40,7 +38,6 @@ async def test_rag_controller_integration():
         assert len(response) > 0
 
 
-@pytest.mark.asyncio
 async def test_rag_graph_web_search_fallback():
     """
     Specifically tests the flow where web search is triggered.

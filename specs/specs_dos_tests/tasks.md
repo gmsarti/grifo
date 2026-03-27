@@ -9,11 +9,11 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: remover ruído e unificar o padrão asyncio em toda a suite.
 
-- [ ] **T1.1** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/unit/`
-- [ ] **T1.2** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/integration/`
-- [ ] **T1.3** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/web/`
-- [ ] **T1.4** Substituir `@pytest.mark.anyio` por nada em `tests/test_agent_chains.py` (anyio → asyncio nativo)
-- [ ] **T1.5** Verificar se todos os testes async ainda passam após as remoções (`pytest --tb=short`)
+- [x] **T1.1** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/unit/`
+- [x] **T1.2** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/integration/`
+- [x] **T1.3** Remover todos os `@pytest.mark.asyncio` dos arquivos de `tests/web/`
+- [x] **T1.4** Substituir `@pytest.mark.anyio` por nada em `tests/test_agent_chains.py` e `tests/test_agent_graph_structure.py`
+- [x] **T1.5** Verificar se todos os testes async ainda passam após as remoções — 134 passed, 0 failures
 
 ---
 
@@ -21,12 +21,12 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: eliminar `test_user` e `test_project` duplicados entre `test_project_repository.py` e `test_chat_repository.py`.
 
-- [ ] **T2.1** Criar `tests/unit/repositories/conftest.py`
-- [ ] **T2.2** Mover fixture `test_user` (cria `User` com email único via uuid) para o novo conftest
-- [ ] **T2.3** Mover fixture `test_project` (cria `Project` vinculado ao `test_user`) para o novo conftest
-- [ ] **T2.4** Remover as definições locais de `test_user` e `test_project` de `test_project_repository.py`
-- [ ] **T2.5** Remover as definições locais de `test_user` e `test_project` de `test_chat_repository.py`
-- [ ] **T2.6** Confirmar que os testes de repositório passam com as fixtures vindas do conftest
+- [x] **T2.1** Criar `tests/unit/repositories/conftest.py`
+- [x] **T2.2** Mover fixture `test_user` (cria `User` com email único via uuid) para o novo conftest
+- [x] **T2.3** Mover fixture `test_project` (cria `Project` vinculado ao `test_user`) para o novo conftest
+- [x] **T2.4** Remover as definições locais de `test_user` e `test_project` de `test_project_repository.py`
+- [x] **T2.5** Remover as definições locais de `test_user` e `test_project` de `test_chat_repository.py`
+- [x] **T2.6** Confirmar que os testes de repositório passam com as fixtures vindas do conftest — 10 passed
 
 ---
 
@@ -34,13 +34,13 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: eliminar a recriação de `mock_llms`, `mock_store_manager` e `mock_history_db` entre `test_agent.py`, `test_agent_flow.py` e `test_memory_persistence.py`.
 
-- [ ] **T3.1** Criar `tests/unit/conftest.py`
-- [ ] **T3.2** Extrair fixture `mock_store_manager` de `test_agent.py` para `tests/unit/conftest.py`
-- [ ] **T3.3** Extrair fixture `mock_history_db` de `test_agent.py` para `tests/unit/conftest.py`
-- [ ] **T3.4** Extrair fixture `mock_llms` de `test_agent.py` para `tests/unit/conftest.py`
-- [ ] **T3.5** Remover as definições inline de `mock_store_manager` e `mock_history_db` de `test_agent_flow.py`
-- [ ] **T3.6** Remover as definições inline equivalentes de `test_memory_persistence.py`
-- [ ] **T3.7** Confirmar que `test_agent.py`, `test_agent_flow.py` e `test_memory_persistence.py` passam
+- [x] **T3.1** Criar `tests/unit/conftest.py`
+- [x] **T3.2** Extrair fixture `mock_store_manager` para `tests/unit/conftest.py` (só usada em unit)
+- [x] **T3.3** Extrair fixture `mock_history_db` para `tests/conftest.py` (usada em unit e integration)
+- [x] **T3.4** Extrair fixture `mock_llms` para `tests/unit/conftest.py` (só usada em unit)
+- [x] **T3.5** Remover as definições inline de `mock_history_db` de `test_agent_flow.py`; testes passam `mock_history_db` como parâmetro
+- [x] **T3.6** Verificado `test_memory_persistence.py` — sem inline mocks das fixtures em questão
+- [x] **T3.7** Confirmar que os três arquivos passam — 28 passed
 
 ---
 
@@ -48,13 +48,13 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: centralizar o mock de `Chroma + OpenAIEmbeddings` que aparece em 5+ arquivos.
 
-- [ ] **T4.1** Adicionar fixture `vector_manager` em `tests/conftest.py` (mock de `Chroma` + `OpenAIEmbeddings` + retorno de `VectorStoreManager` configurado)
-- [ ] **T4.2** Substituir a fixture local `vector_manager` de `tests/unit/test_bm25.py` pela do conftest global
-- [ ] **T4.3** Substituir a fixture local `vector_manager` de `tests/unit/test_hybrid.py` pela do conftest global
-- [ ] **T4.4** Substituir os `@patch` inline de Chroma/OpenAIEmbeddings em `tests/unit/test_bm25_rebuild.py` pelo fixture
-- [ ] **T4.5** Substituir os `@patch` inline de Chroma/OpenAIEmbeddings em `tests/integration/test_e2e_demo.py` pelo fixture
-- [ ] **T4.6** Substituir a fixture local em `tests/integration/test_vector_ingestion.py` pela do conftest global
-- [ ] **T4.7** Confirmar que todos os testes de vector store passam
+- [x] **T4.1** Adicionar fixture `vector_manager` em `tests/conftest.py` (mock de Chroma + OpenAIEmbeddings + HybridRetriever)
+- [x] **T4.2** Substituir a fixture local `vector_manager` de `tests/unit/test_bm25.py` pela do conftest global
+- [x] **T4.3** `tests/unit/test_hybrid.py` mantém fixture local — usa `spec=BaseRetriever` e não mocka HybridRetriever; semântica diferente e incompatível com a global
+- [x] **T4.4** `tests/unit/test_bm25_rebuild.py` mantém helper `_make_manager` — cada teste configura `Chroma.get()` diferente; abstração local adequada
+- [x] **T4.5** Refatorar `tests/integration/test_e2e_demo.py` para usar fixture `vector_manager`; removidos patches redundantes inline
+- [x] **T4.6** Substituir a fixture local de `tests/integration/test_vector_ingestion.py` pela do conftest global
+- [x] **T4.7** Confirmar que todos os testes de vector store passam — 12 passed
 
 ---
 
@@ -62,10 +62,10 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: centralizar a sequência register → login usada nos testes de integração de API.
 
-- [ ] **T5.1** Criar `tests/integration/conftest.py`
-- [ ] **T5.2** Mover fixture `auth_token` de `tests/integration/api/test_project_api.py` para o novo conftest
-- [ ] **T5.3** Refatorar `tests/integration/api/test_auth_api.py` para usar `auth_token` de fixture ao invés de inline onde aplicável
-- [ ] **T5.4** Confirmar que os testes de integração de API passam
+- [x] **T5.1** Criar `tests/integration/conftest.py`
+- [x] **T5.2** Mover fixture `auth_token` para o novo conftest; email atualizado para `integration_user@example.com`
+- [x] **T5.3** `test_auth_api.py` testa o próprio fluxo de auth por teste — sem `auth_token` aplicável; sem alteração necessária
+- [x] **T5.4** Confirmar que os testes de integração de API passam — 7 passed
 
 ---
 
@@ -73,15 +73,15 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: eliminar testes no topo de `tests/` e consolidar com `unit/`.
 
-- [ ] **T6.1** Mover `tests/test_agent_schemas.py` para `tests/unit/test_agent_schemas.py`
-- [ ] **T6.2** Mover `tests/test_agent_graph_structure.py` para `tests/unit/test_agent_graph_structure.py`
-- [ ] **T6.3** Comparar `tests/test_agent_chains.py` com `tests/unit/test_chains.py` e identificar testes únicos
-- [ ] **T6.4** Migrar testes únicos de `tests/test_agent_chains.py` para `tests/unit/test_chains.py`
-- [ ] **T6.5** Deletar `tests/test_agent_chains.py` após migração completa
-- [ ] **T6.6** Adicionar `__init__.py` vazio em `tests/integration/` se ausente
-- [ ] **T6.7** Adicionar `__init__.py` vazio em `tests/integration/api/` se ausente
-- [ ] **T6.8** Adicionar `__init__.py` vazio em `tests/integration/web/` se ausente
-- [ ] **T6.9** Confirmar que `pytest --collect-only` coleta todos os testes sem erros
+- [x] **T6.1** Mover `tests/test_agent_schemas.py` para `tests/unit/test_agent_schemas.py`
+- [x] **T6.2** Mover `tests/test_agent_graph_structure.py` para `tests/unit/` (removido `import pytest` sem uso)
+- [x] **T6.3** Comparado: único teste exclusivo era `test_actor_prompt_template_partial`; `test_get_first_responder`, `test_get_revisor` e `test_orchestrator_initialization` eram duplicatas mais fracas
+- [x] **T6.4** Migrado `test_actor_prompt_template_partial` para `tests/unit/test_chains.py`
+- [x] **T6.5** Deletado `tests/test_agent_chains.py`
+- [x] **T6.6** Criado `tests/integration/__init__.py`
+- [x] **T6.7** Criado `tests/integration/api/__init__.py`
+- [x] **T6.8** Criado `tests/integration/web/__init__.py`
+- [x] **T6.9** 141 testes coletados e passando sem erros
 
 ---
 
@@ -89,11 +89,11 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: eliminar `TestClient` síncrono e instâncias locais de `AsyncClient`.
 
-- [ ] **T7.1** Refatorar `tests/api/test_chat_v1.py` para usar o fixture `client` do conftest (async)
-- [ ] **T7.2** Refatorar `tests/api/test_management.py` para usar o fixture `client` do conftest (remover fixture local)
-- [ ] **T7.3** Refatorar `tests/web/test_chat_web.py`: substituir `TestClient` síncrono por `httpx.AsyncClient`
-- [ ] **T7.4** Verificar se `tests/web/test_auth_web.py` já usa `AsyncClient` e está alinhado com o padrão (ajustar se necessário)
-- [ ] **T7.5** Confirmar que os testes de `tests/api/` e `tests/web/` passam
+- [x] **T7.1** Refatorar `tests/api/test_chat_v1.py` para usar fixture `client` async do conftest
+- [x] **T7.2** Refatorar `tests/api/test_management.py`: removida fixture local síncrona, testes tornados async
+- [x] **T7.3** Refatorar `tests/web/test_chat_web.py`: `TestClient` síncrono substituído por fixture `client` async
+- [x] **T7.4** `tests/web/test_auth_web.py`: removida fixture local `client`; testes já usavam async e passam a usar conftest
+- [x] **T7.5** 15 passed — bonus: adicionado `asyncio_default_test_loop_scope = session` ao pytest.ini para unificar event loops e eliminar `RuntimeError: Event loop is closed`
 
 ---
 

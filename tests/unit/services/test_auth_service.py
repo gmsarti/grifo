@@ -11,7 +11,6 @@ def mock_user_repo():
     return MagicMock()
 
 
-@pytest.mark.asyncio
 async def test_authenticate_user_success(monkeypatch):
     """
     Test successful user authentication.
@@ -39,7 +38,6 @@ async def test_authenticate_user_success(monkeypatch):
     mock_verify.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_authenticate_user_wrong_password(monkeypatch):
     """
     Test authentication failure due to wrong password.
@@ -60,7 +58,6 @@ async def test_authenticate_user_wrong_password(monkeypatch):
     assert user is None
 
 
-@pytest.mark.asyncio
 async def test_create_access_token():
     """
     Test JWT token generation.
@@ -80,7 +77,6 @@ async def test_create_access_token():
     assert payload["sub"] == "test@example.com"
 
 
-@pytest.mark.asyncio
 async def test_register_creates_user(mock_user_repo):
     from app.services.auth_service import AuthService
 
@@ -96,7 +92,6 @@ async def test_register_creates_user(mock_user_repo):
     )
 
 
-@pytest.mark.asyncio
 async def test_register_raises_if_email_exists(mock_user_repo):
     from app.services.auth_service import AuthService
 

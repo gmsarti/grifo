@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from langgraph.prebuilt import ToolNode
 
 from app.processing.tool_executor import execute_tools, run_queries
@@ -14,7 +13,6 @@ def test_tavily_initialization_with_settings(mock_tavily_class):
     pass
 
 
-@pytest.mark.asyncio
 async def test_run_queries_calls_tavily():
     mock_tavily = AsyncMock()
     mock_tavily.ainvoke = AsyncMock(return_value=[])

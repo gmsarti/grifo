@@ -7,65 +7,7 @@ from langgraph.store.memory import InMemoryStore
 
 from app.core.config import settings
 from app.processing.agent import AgentOrchestrator
-from app.processing.memory import StoreMemoryManager, VectorizedMessageHistory
 from app.schemas.agent_schemas import ExtractedFact, KnowledgeExtraction
-
-
-@pytest.fixture
-def mock_llms():
-    """Mock LLMs patches para as chains diretamente."""
-
-    TOOL_CALL = {
-        "name": "answer_question_tool",
-        "args": {"answer": "Mock", "reflection": {}, "search_queries": []},
-        "id": "call_abc123",
-        "type": "tool",
-    }
-
-    mock_draft = MagicMock()
-    mock_draft.ainvoke = AsyncMock(
-        return_value=AIMessage(content="Draft answer", tool_calls=[TOOL_CALL])
-    )
-
-    mock_revise = MagicMock()
-    reasoner_tool_call = TOOL_CALL.copy()
-    reasoner_tool_call["name"] = "revise_answer_tool"
-    mock_revise.ainvoke = AsyncMock(
-        return_value=AIMessage(
-            content="Revised answer", tool_calls=[reasoner_tool_call]
-        )
-    )
-
-    mock_extract = MagicMock()
-    mock_extract.ainvoke = AsyncMock(return_value=KnowledgeExtraction(facts=[]))
-
-    with (
-        patch("app.processing.agent.get_first_responder", return_value=mock_draft),
-        patch("app.processing.agent.get_revisor", return_value=mock_revise),
-        patch(
-            "app.processing.agent.get_knowledge_extractor", return_value=mock_extract
-        ),
-    ):
-        yield mock_draft, mock_revise, mock_extract
-
-
-@pytest.fixture
-def mock_store_manager():
-    manager = MagicMock(spec=StoreMemoryManager)
-    manager.store = MagicMock()  # Ensure nested store is also mocked
-    manager.store.asearch = AsyncMock(return_value=[])
-    manager.store.aput = AsyncMock()
-    manager.search_memories = AsyncMock(return_value=[])
-    manager.save_fact = AsyncMock()
-    return manager
-
-
-@pytest.fixture
-def mock_history_db():
-    db = MagicMock(spec=VectorizedMessageHistory)
-    db.search_history.return_value = ""  # Returns str, not mock
-    db.add_message = AsyncMock()
-    return db
 
 
 @pytest.fixture
@@ -77,14 +19,12 @@ def mock_settings():
 class TestAgentOrchestrator:
     """Testes completos."""
 
-    @pytest.mark.asyncio
     async def test_initialization(self, mock_llms, mock_store_manager):
         orchestrator = AgentOrchestrator(store=InMemoryStore())
         await orchestrator._ensure_initialized()
         assert orchestrator.graph is not None
         assert isinstance(orchestrator.reflexion_tools, ToolNode)
 
-    @pytest.mark.asyncio
     async def test_single_iteration(
         self, mock_llms, mock_store_manager, mock_history_db, mock_settings
     ):
@@ -109,7 +49,6 @@ class TestAgentOrchestrator:
             assert "usage" in result
             assert result["response"] is not None
 
-    @pytest.mark.asyncio
     async def test_event_loop_terminates(
         self, mock_llms, mock_store_manager, mock_history_db
     ):
@@ -130,7 +69,6 @@ class TestAgentOrchestrator:
             assert "iterations" in result
             assert result["iterations"] <= 2  # Draft + Revise
 
-    @pytest.mark.asyncio
     async def test_memory_retrieval(
         self, mock_llms, mock_store_manager, mock_history_db
     ):
@@ -159,7 +97,6 @@ class TestAgentOrchestrator:
             assert len(result["messages"]) == 1
             assert "Relevant Conversation History" in result["messages"][0].content
 
-    @pytest.mark.asyncio
     async def test_knowledge_extraction_empty(self, mock_llms, mock_store_manager):
         # Mock extractor retorna lista vazia
         mock_draft, mock_revise, mock_extract = mock_llms
@@ -175,7 +112,6 @@ class TestAgentOrchestrator:
 
         mock_store_manager.save_fact.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_knowledge_extraction_success(self, mock_llms, mock_store_manager):
         # Mock extractor retorna um fato
         mock_draft, mock_revise, mock_extract = mock_llms
@@ -205,7 +141,6 @@ class TestAgentOrchestrator:
 class TestExtractKnowledgeNode:
     """Testes focados no comportamento do nó de extração de conhecimento."""
 
-    @pytest.mark.asyncio
     async def test_uses_user_thread_id_not_invocation_id(
         self, mock_llms, mock_store_manager
     ):
@@ -238,7 +173,6 @@ class TestExtractKnowledgeNode:
             "não o UUID de invocação ('thread_id')."
         )
 
-    @pytest.mark.asyncio
     async def test_research_conversation_extracts_topic_of_interest(
         self, mock_llms, mock_store_manager
     ):
@@ -292,7 +226,6 @@ class TestExtractKnowledgeNode:
             or "pesquisando" in formatted_fact.lower()
         )
 
-    @pytest.mark.asyncio
     async def test_history_builder_captures_tool_call_answers(
         self, mock_llms, mock_store_manager
     ):
@@ -345,7 +278,6 @@ class TestExtractKnowledgeNode:
             "O extractor recebeu contexto insuficiente para extrair fatos."
         )
 
-    @pytest.mark.asyncio
     async def test_history_builder_ignores_tool_messages(
         self, mock_llms, mock_store_manager
     ):
@@ -378,7 +310,6 @@ class TestExtractKnowledgeNode:
         )
         assert '{"documents"' not in history
 
-    @pytest.mark.asyncio
     async def test_extraction_error_does_not_raise(self, mock_llms, mock_store_manager):
         """Erro durante extração não deve propagar — o nó degrada graciosamente."""
         mock_draft, mock_revise, mock_extract = mock_llms
@@ -394,7 +325,6 @@ class TestExtractKnowledgeNode:
         result = await orchestrator.extract_knowledge_node(state, config)
         assert result == {"messages": []}
 
-    @pytest.mark.asyncio
     async def test_empty_message_list_skips_extraction(
         self, mock_llms, mock_store_manager
     ):
@@ -417,7 +347,6 @@ class TestExtractKnowledgeNode:
         # extractor não deve ser chamado (history_str seria vazio)
         mock_extract.ainvoke.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_multiple_facts_all_saved(self, mock_llms, mock_store_manager):
         """Quando o extractor retorna múltiplos fatos, todos devem ser salvos."""
         mock_draft, mock_revise, mock_extract = mock_llms
@@ -449,7 +378,6 @@ class TestExtractKnowledgeNode:
 
         assert mock_store_manager.save_fact.call_count == 3
 
-    @pytest.mark.asyncio
     async def test_fact_formatted_with_topic_prefix(
         self, mock_llms, mock_store_manager
     ):
@@ -479,7 +407,6 @@ class TestResearcherProfileInfluence:
     as queries e a profundidade da resposta.
     """
 
-    @pytest.mark.asyncio
     async def test_researcher_profile_is_present_in_draft_node_input(
         self, mock_llms, mock_store_manager, mock_history_db
     ):
@@ -555,7 +482,6 @@ class TestResearcherProfileInfluence:
                 "O SystemMessage de memória deve estar no state antes do draft."
             )
 
-    @pytest.mark.asyncio
     async def test_retrieve_memory_injects_user_facts_as_system_message(
         self, mock_llms, mock_store_manager, mock_history_db
     ):
@@ -608,7 +534,6 @@ class TestResearcherProfileInfluence:
             assert "neurociência" in context_msg.content
             assert "plasticidade sináptica" in context_msg.content
 
-    @pytest.mark.asyncio
     async def test_retrieve_memory_combines_history_and_user_facts(
         self, mock_llms, mock_store_manager, mock_history_db
     ):
