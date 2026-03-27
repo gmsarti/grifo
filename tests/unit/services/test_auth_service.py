@@ -12,13 +12,14 @@ def mock_user_repo():
 
 
 @pytest.mark.asyncio
-async def test_authenticate_user_success():
+async def test_authenticate_user_success(monkeypatch):
     """
     Test successful user authentication.
     - Given a user in DB
     - When authenticate is called with correct password
     - Then the user object should be returned.
     """
+    import app.services.auth_service as auth_module
     from app.models.user import User
     from app.services.auth_service import AuthService
 
@@ -27,24 +28,23 @@ async def test_authenticate_user_success():
     mock_user = User(email="test@example.com", hashed_password="hashed_password")
     repo.get_by_email = AsyncMock(return_value=mock_user)
 
-    # Mock password verifying function (to be implemented)
-    import app.services.auth_service as auth_module
-
-    auth_module.verify_password = MagicMock(return_value=True)
+    mock_verify = MagicMock(return_value=True)
+    monkeypatch.setattr(auth_module, "verify_password", mock_verify)
 
     service = AuthService(repo)
     user = await service.authenticate("test@example.com", "password123")
 
     assert user == mock_user
     repo.get_by_email.assert_called_once_with("test@example.com")
-    auth_module.verify_password.assert_called_once()
+    mock_verify.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_authenticate_user_wrong_password():
+async def test_authenticate_user_wrong_password(monkeypatch):
     """
     Test authentication failure due to wrong password.
     """
+    import app.services.auth_service as auth_module
     from app.models.user import User
     from app.services.auth_service import AuthService
 
@@ -52,9 +52,7 @@ async def test_authenticate_user_wrong_password():
     mock_user = User(email="test@example.com", hashed_password="hashed_password")
     repo.get_by_email = AsyncMock(return_value=mock_user)
 
-    import app.services.auth_service as auth_module
-
-    auth_module.verify_password = MagicMock(return_value=False)
+    monkeypatch.setattr(auth_module, "verify_password", MagicMock(return_value=False))
 
     service = AuthService(repo)
     user = await service.authenticate("test@example.com", "wrongpass")

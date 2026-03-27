@@ -90,23 +90,16 @@ class StoreMemoryManager:
             ("memories", user_id, thread_id) if thread_id else ("memories", user_id)
         )
 
-        try:
-            results = await self.store.asearch(namespace, query="")
-            return [{"fact": r.value["content"], "key": r.key} for r in results]
-        except Exception:
-            # Safe fallback if search is not supported or fails
-            return []
+        results = await self.store.asearch(namespace, query="")
+        return [{"fact": r.value["content"], "key": r.key} for r in results]
 
     async def delete_thread_memory(self, user_id: str, thread_id: str):
         """Clears all facts for a specific thread."""
         namespace = ("memories", user_id, thread_id)
-        try:
-            results = await self.store.asearch(namespace, query="")
-            if results:
-                for r in results:
-                    await self.store.adelete(namespace, r.key)
-        except Exception:
-            pass
+        results = await self.store.asearch(namespace, query="")
+        if results:
+            for r in results:
+                await self.store.adelete(namespace, r.key)
 
     async def search_memories(self, user_id: str, query: str, limit: int = 5):
         """

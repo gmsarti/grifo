@@ -80,6 +80,7 @@ class TestAgentOrchestrator:
     @pytest.mark.asyncio
     async def test_initialization(self, mock_llms, mock_store_manager):
         orchestrator = AgentOrchestrator(store=InMemoryStore())
+        await orchestrator._ensure_initialized()
         assert orchestrator.graph is not None
         assert isinstance(orchestrator.reflexion_tools, ToolNode)
 

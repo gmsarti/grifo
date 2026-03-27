@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,16 +10,22 @@ from app.adapters.web.main import router as web_router
 from app.core.db import engine
 from app.models.base import Base
 
-app = FastAPI(title="Agent Stack")
 
-
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         # Import models here to ensure they are registered with Base.metadata
         from app import models  # noqa: F401
 
         await conn.run_sync(Base.metadata.create_all)
+    yield
+    # Shutdown
+    from app.adapters.api.routers.chat import reset_orchestrator
+
+    await reset_orchestrator()
+
+
+app = FastAPI(title="Agent Stack", lifespan=lifespan)
 
 
 # Setup templates and static files

@@ -76,6 +76,7 @@ async def test_agent_process_message_metadata():
         mock_cb.return_value.__enter__.return_value = mock_cb_instance
 
         orchestrator = AgentOrchestrator()
+        await orchestrator._ensure_initialized()
 
         with patch.object(
             orchestrator.graph, "ainvoke", new_callable=AsyncMock

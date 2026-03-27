@@ -37,9 +37,9 @@ async def get_chat_page(
     messages = await chat_repo.get_history(session_id)
 
     return templates.TemplateResponse(
+        request,
         "pages/chat.html",
         {
-            "request": request,
             "session_id": session_id,
             "messages": messages,
             "current_user": current_user,
@@ -64,11 +64,12 @@ async def post_chat_message(
 
     # We return the AI message partial
     return templates.TemplateResponse(
+        request,
         "partials/message.html",
-        {"request": request, "role": "assistant", "content": response_text},
+        {"role": "assistant", "content": response_text},
     )
 
 
 @router.get("/chat/{session_id}/thinking", response_class=HTMLResponse)
 async def get_thinking(request: Request):
-    return templates.TemplateResponse("partials/thinking.html", {"request": request})
+    return templates.TemplateResponse(request, "partials/thinking.html")

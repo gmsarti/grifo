@@ -9,7 +9,10 @@ from langchain_openai import OpenAIEmbeddings
 from pydantic import ConfigDict
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.data_source.loaders import FileIngestionService, WebIngestionService
+
+logger = get_logger(__name__)
 
 
 class HybridRetriever(BaseRetriever):
@@ -73,6 +76,28 @@ class VectorStoreManager:
         self.bm25_retriever = None
         self.hybrid_retriever = None  # replaced ensemble
         self._all_documents = []  # Track all docs for BM25 updates
+        self._rebuild_bm25_from_chroma()
+
+    def _rebuild_bm25_from_chroma(self):
+        """Reconstrói o índice BM25 e o HybridRetriever a partir dos documentos já persistidos no ChromaDB."""
+        result = self.vector_store.get(include=["documents", "metadatas"])
+        texts = result.get("documents") or []
+        metadatas = result.get("metadatas") or [{}] * len(texts)
+
+        docs = [
+            Document(page_content=text, metadata=meta)
+            for text, meta in zip(texts, metadatas)
+        ]
+        if not docs:
+            return
+
+        self._all_documents = docs
+        self.bm25_retriever = BM25Retriever.from_documents(docs, k=5)
+        self.hybrid_retriever = HybridRetriever(
+            vector_retriever=self.vector_store.as_retriever(search_kwargs={"k": 5}),
+            bm25_retriever=self.bm25_retriever,
+            k=5,
+        )
 
     def search(
         self, query: str, search_type: str = "hybrid", k: int = 3
@@ -106,6 +131,9 @@ class VectorStoreManager:
     def search_hybrid(self, query: str, k: int = 3) -> list[Document]:
         """Hybrid: vector + BM25 via custom HybridRetriever."""
         if not self.hybrid_retriever:
+            logger.warning(
+                "BM25 retriever not available, falling back to vector search only."
+            )
             return self.vector_store.similarity_search(query, k=k)
         # Update k dynamically if needed, or use default from initialization
         self.hybrid_retriever.k = k

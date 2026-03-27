@@ -6,9 +6,12 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.logging import get_logger
 from app.data_source.vector_store import VectorStoreManager
 from app.processing.agent import AgentOrchestrator
 from app.repositories.project_repository import ProjectRepository
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -18,10 +21,22 @@ _vector_store: VectorStoreManager | None = None
 
 
 def get_orchestrator() -> AgentOrchestrator:
+    """Gets or creates the global AgentOrchestrator singleton."""
     global _orchestrator
     if _orchestrator is None:
         _orchestrator = AgentOrchestrator()
     return _orchestrator
+
+
+async def reset_orchestrator():
+    """Closes and resets the global orchestrator (useful for tests and lifespan)."""
+    global _orchestrator
+    if _orchestrator:
+        try:
+            await _orchestrator.close()
+        except Exception:
+            pass
+        _orchestrator = None
 
 
 def get_vector_store() -> VectorStoreManager:
@@ -184,9 +199,11 @@ async def get_thread_facts(
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
 ):
     try:
+        await orchestrator._ensure_initialized()
         facts = await orchestrator.store_manager.list_facts(user_id, thread_id)
         return {"status": "success", "thread_id": thread_id, "facts": facts}
     except Exception as e:
+        logger.exception("Error in get_thread_facts")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -198,6 +215,7 @@ async def delete_thread_memory(
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
 ):
     try:
+        await orchestrator._ensure_initialized()
         from app.processing.memory import VectorizedMessageHistory
 
         history = VectorizedMessageHistory(project_id, thread_id)
@@ -207,4 +225,5 @@ async def delete_thread_memory(
 
         return {"status": "success", "message": f"Memória da thread {thread_id} limpa."}
     except Exception as e:
+        logger.exception("Error in delete_thread_memory")
         raise HTTPException(status_code=500, detail=str(e))

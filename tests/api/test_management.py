@@ -1,11 +1,16 @@
+import pytest
 from fastapi.testclient import TestClient
 
-from app.adapters.api.routers.chat import app
-
-client = TestClient(app)
+from app.main import app
 
 
-def test_document_listing_and_deletion():
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
+
+
+def test_document_listing_and_deletion(client):
     """Tests GET /documents and DELETE /documents/{doc_id}."""
     # 1. List for a specific project
     response = client.get("/api/v1/documents?project_id=rpg-project")
@@ -26,7 +31,7 @@ def test_document_listing_and_deletion():
     assert "removido" in response.json()["message"]
 
 
-def test_memory_management():
+def test_memory_management(client):
     """Tests GET /memory/{thread_id}/facts and DELETE /memory/{thread_id}."""
     thread_id = "test-thread-123"
 
@@ -43,7 +48,7 @@ def test_memory_management():
     assert "limpa" in response.json()["message"]
 
 
-def test_delete_document_path_param():
+def test_delete_document_path_param(client):
     """Verify that :path param handles slashes correctly."""
     doc_id = "path/to/my/document.pdf"
     response = client.delete(f"/api/v1/documents/{doc_id}")

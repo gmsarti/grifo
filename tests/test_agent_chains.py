@@ -41,6 +41,7 @@ def test_get_revisor():
 @pytest.mark.anyio
 async def test_orchestrator_initialization():
     orchestrator = AgentOrchestrator()
+    await orchestrator._ensure_initialized()
     assert orchestrator.first_responder is not None
     assert orchestrator.revisor is not None
     assert orchestrator.graph is not None
