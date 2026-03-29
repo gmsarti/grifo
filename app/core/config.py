@@ -1,10 +1,24 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_INSECURE_KEYS = {"supersecretkey", "", "changeme", "secret", "your-secret-key"}
 
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./data/sql_app.db"
-    SECRET_KEY: str = "supersecretkey"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if v.lower() in _INSECURE_KEYS:
+            raise ValueError(
+                "SECRET_KEY insegura. Defina um valor forte no .env "
+                "(ex: openssl rand -hex 32)."
+            )
+        return v
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # API keys

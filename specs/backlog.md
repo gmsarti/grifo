@@ -17,7 +17,7 @@ Cada item segue o formato:
 
 ## Crítico
 
-### [B-001] SECRET_KEY com valor padrão inseguro
+### ✅ [B-001] SECRET_KEY com valor padrão inseguro
 
 - **Tipo**: Segurança
 - **Prioridade**: Crítica
@@ -52,7 +52,7 @@ if settings.SECRET_KEY in ("supersecretkey", "", "changeme"):
 
 ## Alta Prioridade
 
-### [B-002] Memória de longo prazo apagada a cada restart
+### ✅ [B-002] Memória de longo prazo apagada a cada restart
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -89,7 +89,7 @@ self.store = store
 
 ---
 
-### [B-003] Índice BM25 perdido no restart com fallback silencioso
+### ✅ [B-003] Índice BM25 perdido no restart com fallback silencioso
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -138,7 +138,7 @@ if not self.hybrid_retriever:
 
 ---
 
-### [B-004] `add_message` síncrono bloqueia o event loop
+### ❌ [B-004] `add_message` síncrono bloqueia o event loop
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -178,7 +178,7 @@ Alternativamente, avaliar se a versão do `langchain-chroma` já oferece método
 
 ---
 
-### [B-005] Cost tracking zerado ao usar Deepseek
+### ❌ [B-005] Cost tracking zerado ao usar Deepseek
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -215,7 +215,7 @@ usage = result["messages"][-1].usage_metadata  # tokens no objeto de resposta
 
 ## Média Prioridade
 
-### [B-006] Rate limiting ausente no endpoint de chat
+### ❌ [B-006] Rate limiting ausente no endpoint de chat
 
 - **Tipo**: Segurança / Melhoria
 - **Prioridade**: Média
@@ -253,7 +253,7 @@ Tornar os limites configuráveis via `.env` (`RATE_LIMIT_CHAT=20/minute`).
 
 ---
 
-### [B-007] Sem limite de tamanho de arquivo na ingestão
+### ❌ [B-007] Sem limite de tamanho de arquivo na ingestão
 
 - **Tipo**: Bug / Melhoria
 - **Prioridade**: Média
@@ -287,7 +287,7 @@ def validate_file(self, file_path: str):
 
 ---
 
-### [B-008] Contagem de iterações da reflexão pode ser imprecisa
+### ❌ [B-008] Contagem de iterações da reflexão pode ser imprecisa
 
 - **Tipo**: Bug
 - **Prioridade**: Média
@@ -326,7 +326,7 @@ A Opção B é mais robusta e mais legível.
 
 ---
 
-### [B-009] `AgenticRAGController` potencialmente recriado por request
+### 🔄 [B-009] `AgenticRAGController` potencialmente recriado por request
 
 - **Tipo**: Melhoria
 - **Prioridade**: Média
@@ -362,7 +362,7 @@ app = FastAPI(lifespan=lifespan)
 
 ---
 
-### [B-010] Validação e sanitização do `system_prompt`
+### ❌ [B-010] Validação e sanitização do `system_prompt`
 
 - **Tipo**: Segurança
 - **Prioridade**: Média
@@ -399,7 +399,7 @@ class ProjectCreate(BaseModel):
 
 ## Baixa Prioridade / Melhorias
 
-### [B-011] Streaming de resposta no endpoint de chat
+### ❌ [B-011] Streaming de resposta no endpoint de chat
 
 - **Tipo**: Feature
 - **Prioridade**: Baixa
@@ -439,7 +439,7 @@ Atualizar o frontend Streamlit para consumir o stream usando `requests` com `str
 
 ---
 
-### [B-012] Paginação nos endpoints de listagem
+### ❌ [B-012] Paginação nos endpoints de listagem
 
 - **Tipo**: Melhoria
 - **Prioridade**: Baixa
@@ -468,7 +468,7 @@ async def list_projects(limit: int = 20, offset: int = 0, ...):
 
 ---
 
-### [B-013] Pool de conexões ChromaDB
+### ❌ [B-013] Pool de conexões ChromaDB
 
 - **Tipo**: Melhoria
 - **Prioridade**: Baixa
@@ -503,7 +503,7 @@ def get_chroma_collection(collection_name: str, persist_dir: str) -> Chroma:
 
 ---
 
-### [B-014] Testes de integração dependentes de APIs externas
+### ❌ [B-014] Testes de integração dependentes de APIs externas
 
 - **Tipo**: Melhoria
 - **Prioridade**: Baixa
@@ -537,19 +537,19 @@ uv run pytest -m live
 
 ## Resumo
 
-| ID | Título | Tipo | Prioridade |
-|----|--------|------|------------|
-| B-001 | `SECRET_KEY` com valor padrão inseguro | Segurança | **Crítica** |
-| B-002 | Memória de longo prazo apagada a cada restart | Bug | **Alta** |
-| B-003 | Índice BM25 perdido no restart com fallback silencioso | Bug | **Alta** |
-| B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
-| B-005 | Cost tracking zerado ao usar Deepseek | Bug | **Alta** |
-| B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
-| B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
-| B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
-| B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
-| B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
-| B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa |
-| B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa |
-| B-013 | Pool de conexões ChromaDB | Melhoria | Baixa |
-| B-014 | Testes de integração dependentes de APIs externas | Melhoria | Baixa |
+| Status | ID | Título | Tipo | Prioridade |
+|--------|-----|--------|------|------------|
+| ✅ | B-001 | `SECRET_KEY` com valor padrão inseguro | Segurança | **Crítica** |
+| ✅ | B-002 | Memória de longo prazo apagada a cada restart | Bug | **Alta** |
+| ✅ | B-003 | Índice BM25 perdido no restart com fallback silencioso | Bug | **Alta** |
+| ❌ | B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
+| ❌ | B-005 | Cost tracking zerado ao usar Deepseek | Bug | **Alta** |
+| ❌ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
+| ❌ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
+| ❌ | B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
+| 🔄 | B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
+| ❌ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
+| ❌ | B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa |
+| ❌ | B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa |
+| ❌ | B-013 | Pool de conexões ChromaDB | Melhoria | Baixa |
+| ❌ | B-014 | Testes de integração dependentes de APIs externas | Melhoria | Baixa |
