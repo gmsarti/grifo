@@ -4,10 +4,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.adapters.api.main import router as api_router
 from app.adapters.web.main import router as web_router
 from app.core.db import engine
+from app.core.rate_limit import limiter
 from app.models.base import Base
 
 
@@ -26,6 +30,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Agent Stack", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 # Setup templates and static files

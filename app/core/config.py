@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     REFLEXION_MAX_ITERATIONS: int = 2
     MEMORY_DB_PATH: str = "./data/grifo_memory.db"
 
+    # Rate limiting
+    RATE_LIMIT_CHAT: str = "20/minute"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

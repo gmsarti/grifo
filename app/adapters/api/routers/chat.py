@@ -1,12 +1,14 @@
 import shutil
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.logging import get_logger
+from app.core.rate_limit import limiter
 from app.data_source.vector_store import VectorStoreManager
 from app.processing.agent import AgentOrchestrator
 from app.repositories.project_repository import ProjectRepository
@@ -90,15 +92,17 @@ class UrlRequest(BaseModel):
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit(lambda: settings.RATE_LIMIT_CHAT)
 async def chat_endpoint(
-    request: ChatRequest,
+    request: Request,
+    body: ChatRequest,
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
     db: AsyncSession = Depends(get_db),
 ):
     # Busca o system_prompt do projeto, se project_id for numérico
     system_prompt: str | None = None
     try:
-        project_id_int = int(request.project_id)
+        project_id_int = int(body.project_id)
         project_repo = ProjectRepository(db)
         project = await project_repo.get_by_id(project_id_int)
         if project:
@@ -108,10 +112,10 @@ async def chat_endpoint(
 
     try:
         result = await orchestrator.process_message(
-            message=request.message,
-            thread_id=request.thread_id,
-            project_id=request.project_id,
-            user_id=request.user_id,
+            message=body.message,
+            thread_id=body.thread_id,
+            project_id=body.project_id,
+            user_id=body.user_id,
             system_prompt=system_prompt,
         )
 

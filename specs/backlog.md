@@ -215,7 +215,7 @@ usage = result["messages"][-1].usage_metadata  # tokens no objeto de resposta
 
 ## Média Prioridade
 
-### ❌ [B-006] Rate limiting ausente no endpoint de chat
+### ✅ [B-006] Rate limiting ausente no endpoint de chat
 
 - **Tipo**: Segurança / Melhoria
 - **Prioridade**: Média
@@ -362,7 +362,7 @@ app = FastAPI(lifespan=lifespan)
 
 ---
 
-### ❌ [B-010] Validação e sanitização do `system_prompt`
+### ✅ [B-010] Validação e sanitização do `system_prompt`
 
 - **Tipo**: Segurança
 - **Prioridade**: Média
@@ -544,11 +544,11 @@ uv run pytest -m live
 | ✅ | B-003 | Índice BM25 perdido no restart com fallback silencioso | Bug | **Alta** |
 | ✅ | B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
 | ✅ | B-005 | Cost tracking zerado ao usar Deepseek | Bug | **Alta** |
-| ❌ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
+| ✅ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
 | ❌ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
 | ❌ | B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
 | 🔄 | B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
-| ❌ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
+| ✅ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
 | ❌ | B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa |
 | ❌ | B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa |
 | ❌ | B-013 | Pool de conexões ChromaDB | Melhoria | Baixa |
