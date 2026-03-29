@@ -1,4 +1,4 @@
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 
 from app.processing.agent import AgentOrchestrator
 
@@ -27,24 +27,21 @@ async def test_graph_structure():
     assert len(nodes) >= 3
 
 
-def test_event_loop_logic():
-    """Testa lógica do event_loop isoladamente."""
+def test_event_loop_continua_sem_iteracoes():
     orchestrator = AgentOrchestrator()
+    state = {"messages": [HumanMessage(content="test")], "iteration_count": 0}
+    assert orchestrator.event_loop(state) == "execute_tools"
 
-    # Sem tool_calls
-    state_no_tools = {"messages": [HumanMessage(content="no tools")]}
-    assert orchestrator.event_loop(state_no_tools) == "execute_tools"
 
-    # Com tool_calls = MAX_ITERATIONS (formato correto)
-    CORRECT_TOOL_CALL = {
-        "name": "test_tool",
-        "args": {},
-        "id": "call_123",
-        "type": "tool",
-    }
-    state_with_tools = {
-        "messages": [
-            AIMessage(content="", tool_calls=[CORRECT_TOOL_CALL]) for _ in range(2)
-        ]
-    }
-    assert orchestrator.event_loop(state_with_tools) == "extract_knowledge"
+def test_event_loop_termina_ao_atingir_max_iterations():
+    orchestrator = AgentOrchestrator()
+    # MAX_ITERATIONS padrão é 2
+    state = {"messages": [HumanMessage(content="test")], "iteration_count": 2}
+    assert orchestrator.event_loop(state) == "extract_knowledge"
+
+
+def test_event_loop_sem_iteration_count_no_estado():
+    """Estado sem iteration_count deve continuar (valor padrão 0)."""
+    orchestrator = AgentOrchestrator()
+    state = {"messages": [HumanMessage(content="test")]}
+    assert orchestrator.event_loop(state) == "execute_tools"

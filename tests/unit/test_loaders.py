@@ -10,6 +10,7 @@ from app.data_source.loaders import FileIngestionService
 @patch("os.path.exists")
 def test_file_ingestion_service_unsupported_ext(mock_exists, mock_stat):
     mock_exists.return_value = True
+    mock_stat.return_value.st_size = 1024  # 1KB — abaixo de qualquer limite
     service = FileIngestionService()
     with pytest.raises(ValueError, match="Extensão não suportada"):
         service.process_file("test.unknown")
@@ -20,9 +21,9 @@ def test_file_ingestion_service_unsupported_ext(mock_exists, mock_stat):
 @patch("os.path.exists")
 def test_process_pdf(mock_exists, mock_stat, mock_pdf_loader):
     mock_exists.return_value = True
+    mock_stat.return_value.st_size = 1024  # 1KB — abaixo de qualquer limite
     service = FileIngestionService()
 
-    # Mocking loader.load()
     mock_loader_instance = mock_pdf_loader.return_value
     mock_loader_instance.load.return_value = [Document(page_content="PDF content")]
 
@@ -38,6 +39,7 @@ def test_process_pdf(mock_exists, mock_stat, mock_pdf_loader):
 @patch("os.path.exists")
 def test_process_txt(mock_exists, mock_stat, mock_text_loader):
     mock_exists.return_value = True
+    mock_stat.return_value.st_size = 1024  # 1KB — abaixo de qualquer limite
     service = FileIngestionService()
 
     mock_loader_instance = mock_text_loader.return_value

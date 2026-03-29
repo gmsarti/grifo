@@ -39,6 +39,52 @@ def test_validate_file_valid(file_service, tmp_path):
     assert ext == ".md"
 
 
+def test_validate_file_acima_do_limite_levanta_erro(file_service, tmp_path, mocker):
+    big_file = tmp_path / "big.txt"
+    big_file.write_text("x")
+    mocker.patch(
+        "app.data_source.loaders.settings",
+        MAX_FILE_SIZE_MB=10,
+    )
+    # Simula um arquivo de 11MB
+    mocker.patch("os.stat").return_value.st_size = 11 * 1024 * 1024
+
+    with pytest.raises(ValueError, match="Arquivo muito grande"):
+        file_service.validate_file(str(big_file))
+
+
+def test_validate_file_acima_do_limite_informa_tamanho_e_limite(
+    file_service, tmp_path, mocker
+):
+    big_file = tmp_path / "big.pdf"
+    big_file.write_text("x")
+    mocker.patch("app.data_source.loaders.settings", MAX_FILE_SIZE_MB=50)
+    mocker.patch("os.stat").return_value.st_size = 75 * 1024 * 1024
+
+    with pytest.raises(ValueError, match="75.0MB") as exc_info:
+        file_service.validate_file(str(big_file))
+    assert "50MB" in str(exc_info.value)
+
+
+def test_validate_file_exatamente_no_limite_e_aceito(file_service, tmp_path, mocker):
+    file = tmp_path / "onlimit.txt"
+    file.write_text("x")
+    mocker.patch("app.data_source.loaders.settings", MAX_FILE_SIZE_MB=50)
+    mocker.patch("os.stat").return_value.st_size = 50 * 1024 * 1024
+
+    # Não deve lançar exceção (limite é exclusivo: > MAX, não >=)
+    ext = file_service.validate_file(str(file))
+    assert ext == ".txt"
+
+
+def test_max_file_size_mb_configuravel_via_settings():
+    from app.core.config import settings
+
+    assert hasattr(settings, "MAX_FILE_SIZE_MB")
+    assert isinstance(settings.MAX_FILE_SIZE_MB, int)
+    assert settings.MAX_FILE_SIZE_MB > 0
+
+
 def test_process_file_runtime_error_on_parsing(file_service, tmp_path, mocker):
     # Mocking TextLoader to raise an exception during load
     mocker.patch(

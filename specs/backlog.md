@@ -253,7 +253,7 @@ Tornar os limites configuráveis via `.env` (`RATE_LIMIT_CHAT=20/minute`).
 
 ---
 
-### ❌ [B-007] Sem limite de tamanho de arquivo na ingestão
+### ✅ [B-007] Sem limite de tamanho de arquivo na ingestão
 
 - **Tipo**: Bug / Melhoria
 - **Prioridade**: Média
@@ -287,7 +287,7 @@ def validate_file(self, file_path: str):
 
 ---
 
-### ❌ [B-008] Contagem de iterações da reflexão pode ser imprecisa
+### ✅ [B-008] Contagem de iterações da reflexão pode ser imprecisa
 
 - **Tipo**: Bug
 - **Prioridade**: Média
@@ -545,8 +545,8 @@ uv run pytest -m live
 | ✅ | B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
 | ✅ | B-005 | Cost tracking zerado ao usar Deepseek | Bug | **Alta** |
 | ✅ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
-| ❌ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
-| ❌ | B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
+| ✅ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
+| ✅ | B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
 | 🔄 | B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
 | ✅ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
 | ❌ | B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa |

@@ -9,6 +9,7 @@ from langchain_community.document_loaders import (
 )
 from langchain_core.documents import Document
 
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.utils.text_processor import get_text_splitter
 
@@ -45,6 +46,13 @@ class FileIngestionService:
         stat = os.stat(file_path)
         if stat.st_size == 0:
             raise ValueError(f"O arquivo está vazio: {file_path}")
+
+        size_mb = stat.st_size / (1024 * 1024)
+        if size_mb > settings.MAX_FILE_SIZE_MB:
+            raise ValueError(
+                f"Arquivo muito grande: {size_mb:.1f}MB. "
+                f"Limite: {settings.MAX_FILE_SIZE_MB}MB"
+            )
 
         ext = os.path.splitext(file_path)[1].lower()
         if ext not in self.ALLOWED_EXTENSIONS:

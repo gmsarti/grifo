@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Rate limiting
     RATE_LIMIT_CHAT: str = "20/minute"
 
+    # File ingestion
+    MAX_FILE_SIZE_MB: int = 50
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

@@ -1,6 +1,7 @@
+import operator
 import uuid
 from contextlib import AsyncExitStack, nullcontext
-from typing import Literal
+from typing import Annotated, Literal
 
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -29,6 +30,12 @@ MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
 
 # Providers that support cost tracking via LangChain callbacks
 _PROVIDERS_WITH_COST_TRACKING = {"openai"}
+
+
+class ReflexionState(MessagesState):
+    """Estado do grafo com contador explícito de iterações da reflexão."""
+
+    iteration_count: Annotated[int, operator.add]
 
 
 def _extract_usage_from_messages(messages: list) -> dict:
@@ -129,7 +136,7 @@ class AgentOrchestrator:
 
     def _create_graph(self):
         """Creates the LangGraph with checkpointer and store."""
-        builder = StateGraph(MessagesState)
+        builder = StateGraph(ReflexionState)
 
         # Add nodes
         builder.add_node("retrieve_memory", self.retrieve_memory_node)
@@ -204,11 +211,11 @@ class AgentOrchestrator:
             )
             return {"messages": [response]}
 
-    async def revise_node(self, state: MessagesState, config=None):
+    async def revise_node(self, state: ReflexionState, config=None):
         """Node for revising the answer using the REASONER model."""
         with timed_process("Revision Process", logger):
             response = await self.revisor.ainvoke({"messages": state["messages"]})
-            return {"messages": [response]}
+            return {"messages": [response], "iteration_count": 1}
 
     async def extract_knowledge_node(
         self, state: MessagesState, config: RunnableConfig | None = None
@@ -265,17 +272,12 @@ class AgentOrchestrator:
         return {"messages": []}  # Não polui as mensagens da sessão principal
 
     def event_loop(
-        self, state: MessagesState
+        self, state: ReflexionState
     ) -> Literal["execute_tools", "extract_knowledge"]:
-        """Controls the iteration cycle based on tool visits."""
-        tool_calls_count = sum(
-            1
-            for msg in state["messages"][-10:]  # Recent window
-            if isinstance(msg, AIMessage) and msg.tool_calls
-        )
+        """Controls the iteration cycle using the explicit iteration counter."""
         return (
             "extract_knowledge"
-            if tool_calls_count >= MAX_ITERATIONS
+            if state.get("iteration_count", 0) >= MAX_ITERATIONS
             else "execute_tools"
         )
 

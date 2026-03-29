@@ -11,9 +11,10 @@ def test_e2e_ingestion_and_retrieval(vector_manager):
     with (
         patch("app.data_source.loaders.TextLoader") as mock_loader,
         patch("os.path.exists") as mock_exists,
-        patch("os.stat"),
+        patch("os.stat") as mock_stat,
     ):
         mock_exists.return_value = True
+        mock_stat.return_value.st_size = 1024
 
         mock_loader_instance = mock_loader.return_value
         mock_loader_instance.load.return_value = [
