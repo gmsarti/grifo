@@ -15,7 +15,14 @@
       "Bash(.venv/bin/python -m pytest tests/integration/api/ -v --tb=short 2>&1)",
       "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ tests/web/ --collect-only -q)",
       "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ tests/web/ -q --tb=short)",
-      "Bash(.venv/bin/python -m pytest tests/api/ tests/web/ -v --tb=short 2>&1)"
+      "Bash(.venv/bin/python -m pytest tests/api/ tests/web/ -v --tb=short 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/web/test_chat_web.py -v --tb=short 2>&1)",
+      "Bash(python -m pytest -m prompt_contract --collect-only -q)",
+      "Bash(python3 -m pytest -m prompt_contract --collect-only -q)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pytest -m prompt_contract --collect-only -q)",
+      "Bash(.venv/bin/pytest)",
+      "Bash(ls:*)"
     ]
   }
 }

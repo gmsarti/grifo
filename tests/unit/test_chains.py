@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.processing.chains import (
     DRAFT_INSTRUCTION,
     REVISE_INSTRUCTION,
@@ -81,6 +83,7 @@ def test_get_knowledge_extractor_returns_chain():
     mock_llm.with_structured_output.assert_called_once_with(KnowledgeExtraction)
 
 
+@pytest.mark.prompt_contract
 def test_knowledge_extractor_prompt_covers_research_topics():
     """
     O prompt deve cobrir tópicos de pesquisa e técnicos, não apenas preferências
@@ -130,6 +133,7 @@ def test_knowledge_extractor_prompt_covers_research_topics():
 # ── actor_prompt_template — uso do perfil do pesquisador ─────────────────────
 
 
+@pytest.mark.prompt_contract
 def test_actor_prompt_instructs_use_of_researcher_profile():
     """
     O system prompt base deve instruir explicitamente o LLM a usar o contexto de
@@ -162,6 +166,7 @@ def test_actor_prompt_instructs_use_of_researcher_profile():
     )
 
 
+@pytest.mark.prompt_contract
 def test_actor_prompt_instructs_tailored_search_queries():
     """
     O LLM deve ser instruído a adaptar as queries de busca ao perfil do pesquisador,
@@ -190,6 +195,7 @@ def test_actor_prompt_instructs_tailored_search_queries():
     )
 
 
+@pytest.mark.prompt_contract
 def test_revise_instruction_adapts_to_researcher_background():
     """
     REVISE_INSTRUCTION deve incluir instrução para adaptar a resposta revisada
@@ -217,6 +223,7 @@ def test_revise_instruction_adapts_to_researcher_background():
     )
 
 
+@pytest.mark.prompt_contract
 def test_knowledge_extractor_schema_topic_covers_research():
     """
     O campo 'topic' de ExtractedFact deve guiar o LLM a classificar fatos de
@@ -244,6 +251,7 @@ def test_knowledge_extractor_schema_topic_covers_research():
 # ── anti-especulação: extração ancorada em declarações diretas ────────────────
 
 
+@pytest.mark.prompt_contract
 def test_knowledge_extractor_prompt_prohibits_speculation():
     """
     O prompt deve proibir explicitamente a inferência de fatos não declarados.
@@ -280,6 +288,7 @@ def test_knowledge_extractor_prompt_prohibits_speculation():
     )
 
 
+@pytest.mark.prompt_contract
 def test_extracted_fact_description_requires_direct_statement():
     """
     A descrição do campo 'fact' em ExtractedFact deve orientar o LLM a ancorar

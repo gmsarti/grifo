@@ -101,10 +101,10 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: garantir cleanup de `dependency_overrides` mesmo quando testes falham.
 
-- [ ] **T8.1** Identificar todos os locais onde `app.dependency_overrides` é manipulado dentro do corpo do teste (não em fixture)
-- [ ] **T8.2** Encapsular o override de `tests/web/test_chat_web.py` em fixture com `yield` + `app.dependency_overrides.clear()`
-- [ ] **T8.3** Encapsular o override de `tests/integration/test_api_ingestion.py` em fixture com `yield`
-- [ ] **T8.4** Confirmar que não há `dependency_overrides` soltos em nenhum arquivo de teste
+- [x] **T8.1** Identificados 2 testes em `test_chat_web.py` com overrides no corpo sem cleanup garantido
+- [x] **T8.2** Extraídas fixtures `authenticated_client` e `rag_service_override` em `test_chat_web.py`; cleanup via `.pop()` no yield
+- [x] **T8.3** `test_api_ingestion.py` já tinha override encapsulado em fixture `test_app` com `yield` + `.clear()` — sem alteração necessária
+- [x] **T8.4** Todos os `dependency_overrides` estão dentro de fixtures; nenhum solto no corpo de testes
 
 ---
 
@@ -112,17 +112,17 @@ Marque cada item com `[x]` ao concluir.
 
 > Objetivo: isolar testes frágeis de conteúdo de prompt para poder excluí-los em runs rápidos.
 
-- [ ] **T9.1** Adicionar `@pytest.mark.prompt_contract` nos testes de `tests/unit/test_chains.py` que verificam strings dentro de prompts
-- [ ] **T9.2** Registrar o marker `prompt_contract` em `pytest.ini` para evitar warning de marker desconhecido
-- [ ] **T9.3** Documentar no `pytest.ini` (como comentário) que `pytest -m "not prompt_contract"` exclui esses testes
-- [ ] **T9.4** Confirmar que `pytest -m prompt_contract` roda apenas os testes de conteúdo de prompt
+- [x] **T9.1** Adicionar `@pytest.mark.prompt_contract` nos testes de `tests/unit/test_chains.py` que verificam strings dentro de prompts
+- [x] **T9.2** Registrar o marker `prompt_contract` em `pytest.ini` para evitar warning de marker desconhecido
+- [x] **T9.3** Documentar no `pytest.ini` (como comentário) que `pytest -m "not prompt_contract"` exclui esses testes
+- [x] **T9.4** Confirmar que `pytest -m prompt_contract` roda apenas os testes de conteúdo de prompt — 7/146 coletados
 
 ---
 
 ## Verificação Final
 
-- [ ] **TF.1** Rodar `pytest` completo e confirmar que todos os testes passam
-- [ ] **TF.2** Confirmar que nenhum arquivo `test_*.py` existe diretamente em `tests/` (raiz)
-- [ ] **TF.3** Confirmar que não há `@pytest.mark.asyncio` ou `@pytest.mark.anyio` em nenhum arquivo
-- [ ] **TF.4** Confirmar que não há fixtures duplicadas entre arquivos de teste
-- [ ] **TF.5** Confirmar que `dependency_overrides` é gerenciado apenas em fixtures (com `yield`)
+- [x] **TF.1** Rodar `pytest` completo e confirmar que todos os testes passam — 146 passed, 0 failures
+- [x] **TF.2** Confirmar que nenhum arquivo `test_*.py` existe diretamente em `tests/` (raiz)
+- [x] **TF.3** Confirmar que não há `@pytest.mark.asyncio` ou `@pytest.mark.anyio` em nenhum arquivo
+- [x] **TF.4** Confirmar que não há fixtures duplicadas entre arquivos de teste
+- [x] **TF.5** Confirmar que `dependency_overrides` é gerenciado apenas em fixtures (com `yield`)
