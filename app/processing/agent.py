@@ -1,5 +1,5 @@
 import uuid
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, nullcontext
 from typing import Literal
 
 from langchain_community.callbacks.manager import get_openai_callback
@@ -26,6 +26,24 @@ logger = get_logger(__name__)
 
 # Plan for MAX_ITERATIONS from config or default
 MAX_ITERATIONS = getattr(settings, "REFLEXION_MAX_ITERATIONS", 2)
+
+# Providers that support cost tracking via LangChain callbacks
+_PROVIDERS_WITH_COST_TRACKING = {"openai"}
+
+
+def _extract_usage_from_messages(messages: list) -> dict:
+    """Extrai tokens de uso dos AIMessages via usage_metadata (agnóstico de provider)."""
+    prompt_tokens = 0
+    completion_tokens = 0
+    for msg in messages:
+        if isinstance(msg, AIMessage) and msg.usage_metadata:
+            prompt_tokens += msg.usage_metadata.get("input_tokens", 0)
+            completion_tokens += msg.usage_metadata.get("output_tokens", 0)
+    return {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+    }
 
 
 @tool
@@ -311,21 +329,35 @@ class AgentOrchestrator:
             await history_db.add_message(inputs["messages"][0])
 
             try:
-                with get_openai_callback() as cb:
+                provider = settings.MODEL_PROVIDER
+                if provider in _PROVIDERS_WITH_COST_TRACKING:
+                    cost_ctx = get_openai_callback()
+                else:
+                    logger.warning(
+                        "Cost tracking unavailable for provider '%s'. "
+                        "total_cost will be null.",
+                        provider,
+                    )
+                    cost_ctx = nullcontext()
+
+                with cost_ctx as cb:
                     with timed_process("Graph Execution", logger):
                         result = await self.graph.ainvoke(inputs, config=config)
 
-                logger.info(
-                    "Token usage and tokens details",
-                    extra={
-                        "tokens": {
-                            "total_tokens": cb.total_tokens,
-                            "prompt_tokens": cb.prompt_tokens,
-                            "completion_tokens": cb.completion_tokens,
-                            "total_cost": cb.total_cost,
-                        }
-                    },
-                )
+                if provider in _PROVIDERS_WITH_COST_TRACKING:
+                    usage = {
+                        "total_tokens": cb.total_tokens,
+                        "prompt_tokens": cb.prompt_tokens,
+                        "completion_tokens": cb.completion_tokens,
+                        "total_cost": cb.total_cost,
+                    }
+                else:
+                    usage = {
+                        **_extract_usage_from_messages(result.get("messages", [])),
+                        "total_cost": None,
+                    }
+
+                logger.info("Token usage", extra={"tokens": usage})
 
                 # Extract final AI Message and update history
                 if "messages" in result and len(result["messages"]) > 0:
@@ -401,12 +433,7 @@ class AgentOrchestrator:
                                 if isinstance(m, ToolMessage)
                             ),
                             "grounding_metadata": grounding,
-                            "usage": {
-                                "total_tokens": cb.total_tokens,
-                                "prompt_tokens": cb.prompt_tokens,
-                                "completion_tokens": cb.completion_tokens,
-                                "total_cost": cb.total_cost,
-                            },
+                            "usage": usage,
                             "process_trace": [
                                 m.name if hasattr(m, "name") and m.name else "msg"
                                 for m in result["messages"]
@@ -424,12 +451,7 @@ class AgentOrchestrator:
                         "search_queries": [],
                     },
                     "process_trace": [],
-                    "usage": {
-                        "total_tokens": cb.total_tokens,
-                        "prompt_tokens": cb.prompt_tokens,
-                        "completion_tokens": cb.completion_tokens,
-                        "total_cost": cb.total_cost,
-                    },
+                    "usage": usage,
                 }
             except Exception as e:
                 logger.error(f"Error processing message: {str(e)}")
