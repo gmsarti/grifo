@@ -35,7 +35,7 @@ class VectorizedMessageHistory:
             "project_id": self.project_id,
             "id": str(uuid.uuid4()),
         }
-        self.vector_store.add_texts(texts=[content], metadatas=[metadata])
+        await self.vector_store.aadd_texts(texts=[content], metadatas=[metadata])
 
     def delete_history(self):
         """Removes all messages from the current thread history."""

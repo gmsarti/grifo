@@ -138,7 +138,7 @@ if not self.hybrid_retriever:
 
 ---
 
-### ❌ [B-004] `add_message` síncrono bloqueia o event loop
+### ✅ [B-004] `add_message` síncrono bloqueia o event loop
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -542,7 +542,7 @@ uv run pytest -m live
 | ✅ | B-001 | `SECRET_KEY` com valor padrão inseguro | Segurança | **Crítica** |
 | ✅ | B-002 | Memória de longo prazo apagada a cada restart | Bug | **Alta** |
 | ✅ | B-003 | Índice BM25 perdido no restart com fallback silencioso | Bug | **Alta** |
-| ❌ | B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
+| ✅ | B-004 | `add_message` síncrono bloqueia o event loop | Bug | **Alta** |
 | ❌ | B-005 | Cost tracking zerado ao usar Deepseek | Bug | **Alta** |
 | ❌ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
 | ❌ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |

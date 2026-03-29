@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from langchain_core.messages import HumanMessage
@@ -6,7 +7,18 @@ from langgraph.store.memory import InMemoryStore
 from app.processing.memory import StoreMemoryManager, VectorizedMessageHistory
 
 
-async def test_vectorized_history_add_and_search():
+def _make_history(project_id="test_project", thread_id="test_thread"):
+    with (
+        patch("app.processing.memory.Chroma") as mock_chroma,
+        patch("app.processing.memory.OpenAIEmbeddings"),
+    ):
+        history = VectorizedMessageHistory(project_id, thread_id)
+        mock_vs = mock_chroma.return_value
+        mock_vs.aadd_texts = AsyncMock()
+        return history, mock_vs
+
+
+async def test_add_message_usa_aadd_texts():
     thread_id = "test_thread_123"
 
     with (
@@ -15,17 +27,64 @@ async def test_vectorized_history_add_and_search():
     ):
         history = VectorizedMessageHistory("test_project", thread_id)
         mock_vs = mock_chroma.return_value
+        mock_vs.aadd_texts = AsyncMock()
 
-        # Test add_message
-        msg = HumanMessage(content="Hello world")
-        await history.add_message(msg)
-        mock_vs.add_texts.assert_called_once()
+        await history.add_message(HumanMessage(content="Hello world"))
 
-        # Test search_history
+        mock_vs.aadd_texts.assert_awaited_once()
+
+
+async def test_add_message_nao_usa_add_texts_sincrono():
+    thread_id = "test_thread_456"
+
+    with (
+        patch("app.processing.memory.Chroma") as mock_chroma,
+        patch("app.processing.memory.OpenAIEmbeddings"),
+    ):
+        history = VectorizedMessageHistory("test_project", thread_id)
+        mock_vs = mock_chroma.return_value
+        mock_vs.aadd_texts = AsyncMock()
+
+        await history.add_message(HumanMessage(content="Hello world"))
+
+        mock_vs.add_texts.assert_not_called()
+
+
+async def test_add_message_duas_chamadas_simultaneas_nao_se_bloqueiam():
+    with (
+        patch("app.processing.memory.Chroma") as mock_chroma,
+        patch("app.processing.memory.OpenAIEmbeddings"),
+    ):
+        history = VectorizedMessageHistory("test_project", "thread_concurrent")
+        mock_vs = mock_chroma.return_value
+        mock_vs.aadd_texts = AsyncMock()
+
+        msg_a = HumanMessage(content="Mensagem A")
+        msg_b = HumanMessage(content="Mensagem B")
+
+        await asyncio.gather(
+            history.add_message(msg_a),
+            history.add_message(msg_b),
+        )
+
+        assert mock_vs.aadd_texts.await_count == 2
+
+
+async def test_search_history_retorna_prefixo_correto():
+    thread_id = "test_thread_search"
+
+    with (
+        patch("app.processing.memory.Chroma") as mock_chroma,
+        patch("app.processing.memory.OpenAIEmbeddings"),
+    ):
+        history = VectorizedMessageHistory("test_project", thread_id)
+        mock_vs = mock_chroma.return_value
         mock_vs.similarity_search.return_value = [
             MagicMock(page_content="Hello world", metadata={"type": "human"})
         ]
+
         res = history.search_history("hello")
+
         assert "User: Hello world" in res
 
 
