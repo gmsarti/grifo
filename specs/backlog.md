@@ -326,7 +326,7 @@ A Opção B é mais robusta e mais legível.
 
 ---
 
-### 🔄 [B-009] `AgenticRAGController` potencialmente recriado por request
+### ✅ [B-009] `AgenticRAGController` potencialmente recriado por request
 
 - **Tipo**: Melhoria
 - **Prioridade**: Média
@@ -547,7 +547,7 @@ uv run pytest -m live
 | ✅ | B-006 | Rate limiting ausente no endpoint de chat | Segurança | Média |
 | ✅ | B-007 | Sem limite de tamanho de arquivo na ingestão | Bug | Média |
 | ✅ | B-008 | Contagem de iterações da reflexão pode ser imprecisa | Bug | Média |
-| 🔄 | B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
+| ✅ | B-009 | `AgenticRAGController` potencialmente recriado por request | Melhoria | Média |
 | ✅ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média |
 | ❌ | B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa |
 | ❌ | B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa |

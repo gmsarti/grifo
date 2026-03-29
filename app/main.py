@@ -22,7 +22,16 @@ async def lifespan(app: FastAPI):
         from app import models  # noqa: F401
 
         await conn.run_sync(Base.metadata.create_all)
+
+    # Initialize singletons at startup so the graph is compiled before the first request
+    from app.adapters.api.routers.chat import get_orchestrator, get_vector_store
+
+    orchestrator = get_orchestrator()
+    await orchestrator._ensure_initialized()
+    get_vector_store()
+
     yield
+
     # Shutdown
     from app.adapters.api.routers.chat import reset_orchestrator
 
