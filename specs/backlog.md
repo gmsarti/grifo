@@ -399,6 +399,164 @@ class ProjectCreate(BaseModel):
 
 ## Baixa Prioridade / Melhorias
 
+### ❌ [B-015] Chat multimodal — envio de imagens na conversa
+
+- **Tipo**: Feature
+- **Prioridade**: Média
+- **Área**: `app/adapters/api/`, `app/schemas/`, `app/processing/`
+
+**História de usuário:**
+> Como usuário, quero enviar uma imagem (JPEG ou PNG) junto com minha mensagem de chat para que o agente analise, descreva e responda perguntas sobre o conteúdo visual.
+
+**Problema:**
+O endpoint `POST /api/v1/chat` aceita apenas texto (`message: str`). Não há como transmitir imagens ao agente. A `HumanMessage` construída no pipeline nunca inclui conteúdo visual, mesmo que o modelo configurado (`gpt-4o`) suporte visão nativamente via OpenAI API.
+
+**Solução proposta:**
+Estender o endpoint para aceitar `multipart/form-data` com um campo opcional `image` (arquivo binário JPEG/PNG). O backend converte a imagem para base64 e monta uma `HumanMessage` com conteúdo misto:
+
+```python
+# app/schemas/chat.py
+class ChatRequest(BaseModel):
+    message: str
+    project_id: str
+    thread_id: str
+    user_id: str | None = "default_user"
+    config: ChatConfig | None = ChatConfig()
+    # image_base64 populado internamente — não exposto diretamente no JSON
+
+# app/adapters/api/routers/chat.py
+@router.post("/chat")
+async def chat_endpoint(
+    message: str = Form(...),
+    project_id: str = Form(...),
+    thread_id: str = Form(...),
+    user_id: str = Form("default_user"),
+    image: UploadFile | None = File(None),
+    ...
+):
+    image_b64 = None
+    if image:
+        _validate_image(image)  # tipo e tamanho
+        raw = await image.read()
+        image_b64 = base64.b64encode(raw).decode()
+    ...
+```
+
+No `AgentOrchestrator`, construir a mensagem de entrada como lista de partes quando `image_base64` está presente:
+
+```python
+# app/processing/agent.py
+if image_base64:
+    human_content = [
+        {"type": "text", "text": message},
+        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}},
+    ]
+else:
+    human_content = message
+
+HumanMessage(content=human_content)
+```
+
+Validações necessárias:
+- Tipos permitidos: `image/jpeg`, `image/png`
+- Tamanho máximo: `MAX_IMAGE_SIZE_MB` (default 10 MB, configurável)
+- Apenas um modelo com capacidade de visão pode processar imagens: verificar se `MODEL_REASONER` suporta visão e lançar erro claro caso contrário (ex: Deepseek sem visão)
+
+**Arquivos afetados:**
+- `app/adapters/api/routers/chat.py`
+- `app/schemas/chat.py`
+- `app/processing/agent.py`
+- `app/core/config.py` (`MAX_IMAGE_SIZE_MB`)
+
+**Critério de aceite:**
+- `POST /api/v1/chat` com `multipart/form-data` contendo `image` retorna análise do conteúdo visual
+- Imagem acima de `MAX_IMAGE_SIZE_MB` retorna `413`
+- Tipo de arquivo inválido retorna `422` com mensagem clara
+- Requisições sem imagem continuam funcionando via JSON ou form sem campo `image`
+- Testes cobrem: mensagem sem imagem, com imagem válida, com imagem muito grande, com tipo inválido
+
+---
+
+### ❌ [B-016] Ingestão de imagens no knowledge base
+
+- **Tipo**: Feature
+- **Prioridade**: Média
+- **Área**: `app/data_source/`
+
+**História de usuário:**
+> Como administrador de um projeto, quero fazer upload de imagens (JPEG/PNG) para o knowledge base do projeto para que o agente possa responder perguntas sobre o conteúdo visual desses arquivos durante o chat.
+
+**Problema:**
+`FileIngestionService` aceita apenas `.pdf`, `.docx`, `.csv`, `.txt` e `.md`. Imagens são rejeitadas na validação. Não existe pipeline para extrair significado de imagens e indexá-las no ChromaDB — o agente não consegue recuperar informação visual via RAG.
+
+**Solução proposta:**
+Adicionar um `ImageIngestionLoader` que usa o modelo de visão (`MODEL_REASONER`) para gerar uma descrição rica da imagem e a indexa como documento de texto no ChromaDB, com metadados que identificam a origem como imagem:
+
+```python
+# app/data_source/loaders.py
+
+class ImageIngestionLoader:
+    """Usa GPT-4o vision para descrever imagens e indexá-las como documentos."""
+
+    SUPPORTED_TYPES = {".jpg", ".jpeg", ".png"}
+
+    def __init__(self, llm):
+        self.llm = llm  # modelo com capacidade de visão
+
+    def load(self, file_path: str) -> list[Document]:
+        with open(file_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+
+        ext = Path(file_path).suffix.lower()
+        mime = "image/png" if ext == ".png" else "image/jpeg"
+
+        response = self.llm.invoke([
+            HumanMessage(content=[
+                {"type": "text", "text": (
+                    "Descreva esta imagem em detalhes. Inclua: objetos presentes, "
+                    "texto visível, cores relevantes, layout e qualquer informação "
+                    "que seria útil para responder perguntas sobre ela."
+                )},
+                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+            ])
+        ])
+
+        return [Document(
+            page_content=response.content,
+            metadata={
+                "source": file_path,
+                "source_type": "image",
+                "mime_type": mime,
+            }
+        )]
+```
+
+Integrar no `FileIngestionService.load_document()`:
+
+```python
+def load_document(self, file_path: str) -> list[Document]:
+    ext = Path(file_path).suffix.lower()
+    if ext in ImageIngestionLoader.SUPPORTED_TYPES:
+        return ImageIngestionLoader(llm=get_vision_llm()).load(file_path)
+    # loaders existentes...
+```
+
+Adicionar `.jpg`, `.jpeg`, `.png` à lista de extensões válidas em `validate_file`.
+
+**Arquivos afetados:**
+- `app/data_source/loaders.py`
+- `app/core/llm.py` (função `get_vision_llm` ou reutilizar o reasoner)
+- `app/core/config.py` (extensões permitidas)
+
+**Critério de aceite:**
+- Upload de `.jpg` ou `.png` via `POST /api/v1/ingest/upload` indexa o documento com sucesso
+- Uma pergunta sobre o conteúdo da imagem retorna resposta baseada na descrição gerada
+- Metadado `source_type: image` está presente no documento indexado
+- Testes unitários mockam o LLM de visão e verificam o documento gerado
+- Extensões inválidas ainda retornam `422`
+
+---
+
 ### ❌ [B-011] Streaming de resposta no endpoint de chat
 
 - **Tipo**: Feature
@@ -553,3 +711,5 @@ uv run pytest -m live
 | ❌ | B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa |
 | ❌ | B-013 | Pool de conexões ChromaDB | Melhoria | Baixa |
 | ❌ | B-014 | Testes de integração dependentes de APIs externas | Melhoria | Baixa |
+| ❌ | B-015 | Chat multimodal — envio de imagens na conversa | Feature | Média |
+| ❌ | B-016 | Ingestão de imagens no knowledge base | Feature | Média |
