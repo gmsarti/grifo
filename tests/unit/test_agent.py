@@ -7,7 +7,9 @@ from langgraph.store.memory import InMemoryStore
 
 from app.core.config import settings
 from app.processing.agent import AgentOrchestrator
+from app.processing.router_chain import RouterDecision
 from app.schemas.agent_schemas import ExtractedFact, KnowledgeExtraction
+from app.schemas.arq_schemas import ExtrairPadroesResponse
 
 
 @pytest.fixture
@@ -583,3 +585,214 @@ class TestResearcherProfileInfluence:
             assert "Known Facts/Preferences" in context_content
             assert "neurobiologia" in context_content
             assert "BDNF" in context_content
+
+
+# ── TestRouteAfterClassify ────────────────────────────────────────────────────
+
+
+class TestRouteAfterClassify:
+    """Testa a função de roteamento pura — sem I/O, sem LLM."""
+
+    def test_returns_arq_extract_when_arq_intent_and_zona_present(self):
+        orchestrator = AgentOrchestrator()
+        state = {
+            "messages": [],
+            "intent": "arq_extract",
+            "zona": "quarto",
+            "mobiliario": ["cama"],
+        }
+        assert orchestrator.route_after_classify(state) == "arq_extract"
+
+    def test_falls_back_to_reflexion_when_arq_intent_but_no_zona(self):
+        """Sem zona identificada não é possível extrair padrões."""
+        orchestrator = AgentOrchestrator()
+        state = {
+            "messages": [],
+            "intent": "arq_extract",
+            "zona": None,
+            "mobiliario": [],
+        }
+        assert orchestrator.route_after_classify(state) == "retrieve_memory"
+
+    def test_falls_back_to_reflexion_when_reflexion_intent(self):
+        orchestrator = AgentOrchestrator()
+        state = {
+            "messages": [],
+            "intent": "reflexion",
+            "zona": "quarto",
+            "mobiliario": [],
+        }
+        assert orchestrator.route_after_classify(state) == "retrieve_memory"
+
+    def test_falls_back_to_reflexion_when_intent_absent_from_state(self):
+        orchestrator = AgentOrchestrator()
+        state = {"messages": []}
+        assert orchestrator.route_after_classify(state) == "retrieve_memory"
+
+
+# ── TestClassifyNode ──────────────────────────────────────────────────────────
+
+
+class TestClassifyNode:
+    """Testa o nó de classificação de intenção do agente."""
+
+    async def test_classify_node_returns_reflexion_intent(self, mock_llms):
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+        orchestrator.router_chain = MagicMock()
+        orchestrator.router_chain.ainvoke = AsyncMock(
+            return_value=RouterDecision(intent="reflexion", zona=None, mobiliario=[])
+        )
+
+        state = {
+            "messages": [HumanMessage(content="O que é Python?")],
+            "intent": "",
+            "zona": None,
+            "mobiliario": [],
+        }
+        result = await orchestrator.classify_node(state)
+
+        assert result["intent"] == "reflexion"
+        assert result["zona"] is None
+
+    async def test_classify_node_returns_arq_intent_with_zona_and_mobiliario(
+        self, mock_llms
+    ):
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+        orchestrator.router_chain = MagicMock()
+        orchestrator.router_chain.ainvoke = AsyncMock(
+            return_value=RouterDecision(
+                intent="arq_extract", zona="quarto", mobiliario=["cama", "guarda-roupa"]
+            )
+        )
+
+        state = {
+            "messages": [
+                HumanMessage(
+                    content="No quarto com cama e guarda-roupa, a cama encostada na parede"
+                )
+            ],
+            "intent": "",
+            "zona": None,
+            "mobiliario": [],
+        }
+        result = await orchestrator.classify_node(state)
+
+        assert result["intent"] == "arq_extract"
+        assert result["zona"] == "quarto"
+        assert "cama" in result["mobiliario"]
+
+    async def test_classify_node_passes_last_human_message_to_router(self, mock_llms):
+        """Apenas a última HumanMessage deve ser enviada ao router."""
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+        orchestrator.router_chain = MagicMock()
+        orchestrator.router_chain.ainvoke = AsyncMock(
+            return_value=RouterDecision(intent="reflexion")
+        )
+
+        state = {
+            "messages": [
+                HumanMessage(content="mensagem anterior"),
+                AIMessage(content="resposta anterior"),
+                HumanMessage(content="mensagem atual"),
+            ],
+            "intent": "",
+            "zona": None,
+            "mobiliario": [],
+        }
+        await orchestrator.classify_node(state)
+
+        call_args = orchestrator.router_chain.ainvoke.call_args
+        message_sent = call_args.args[0]["message"] if call_args.args else call_args.kwargs["message"]
+        assert message_sent == "mensagem atual"
+
+
+# ── TestArqExtractNode ────────────────────────────────────────────────────────
+
+
+class TestArqExtractNode:
+    """Testa o nó de extração de padrões arquitetônicos no contexto do agente."""
+
+    async def test_arq_extract_node_returns_ai_message_with_json_content(
+        self, mock_llms
+    ):
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+
+        mock_result = ExtrairPadroesResponse(
+            zona="quarto",
+            mobiliario_valido=["cama"],
+            padroes=[
+                {
+                    "tipo": "restricao",
+                    "padrao": "encostado",
+                    "objeto": {"nome": "cama"},
+                    "lado": "fundos",
+                }
+            ],
+        )
+
+        with patch("app.services.arq_service.arq_service") as mock_service:
+            mock_service.extrair_padroes = AsyncMock(return_value=mock_result)
+
+            state = {
+                "messages": [HumanMessage(content="A cama encostada na parede")],
+                "intent": "arq_extract",
+                "zona": "quarto",
+                "mobiliario": ["cama"],
+            }
+            result = await orchestrator.arq_extract_node(state)
+
+        assert len(result["messages"]) == 1
+        msg = result["messages"][0]
+        assert isinstance(msg, AIMessage)
+        assert "encostado" in msg.content
+
+    async def test_arq_extract_node_uses_full_zone_catalog_when_no_mobiliario(
+        self, mock_llms
+    ):
+        """Sem móveis explícitos, usa todas as famílias da zona."""
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+
+        mock_result = ExtrairPadroesResponse(
+            zona="quarto", mobiliario_valido=[], padroes=[]
+        )
+
+        with patch("app.services.arq_service.arq_service") as mock_service:
+            mock_service.extrair_padroes = AsyncMock(return_value=mock_result)
+
+            state = {
+                "messages": [HumanMessage(content="A cama encostada")],
+                "intent": "arq_extract",
+                "zona": "quarto",
+                "mobiliario": [],  # nenhum móvel identificado pelo router
+            }
+            await orchestrator.arq_extract_node(state)
+
+        call_args = mock_service.extrair_padroes.call_args
+        request_sent = call_args.args[0] if call_args.args else call_args.kwargs.get("request")
+        # Deve ter passado algum mobiliário (do catálogo completo da zona)
+        assert len(request_sent.mobiliario) > 0
+
+    async def test_arq_extract_node_returns_error_message_on_exception(
+        self, mock_llms
+    ):
+        """Erro no serviço não deve propagar — retorna mensagem de erro ao usuário."""
+        from fastapi import HTTPException
+
+        orchestrator = AgentOrchestrator(store=InMemoryStore())
+
+        with patch("app.services.arq_service.arq_service") as mock_service:
+            mock_service.extrair_padroes = AsyncMock(
+                side_effect=HTTPException(status_code=422, detail="zona inválida")
+            )
+
+            state = {
+                "messages": [HumanMessage(content="texto")],
+                "intent": "arq_extract",
+                "zona": "quarto",
+                "mobiliario": ["cama"],
+            }
+            result = await orchestrator.arq_extract_node(state)
+
+        assert len(result["messages"]) == 1
+        assert isinstance(result["messages"][0], AIMessage)
+        assert "Erro" in result["messages"][0].content

@@ -3,28 +3,32 @@ from langchain_core.messages import HumanMessage
 from app.processing.agent import AgentOrchestrator
 
 
-async def test_graph_structure():
+async def test_graph_has_reflexion_nodes():
     orchestrator = AgentOrchestrator()
     await orchestrator._ensure_initialized()
-    graph = orchestrator.graph
-
-    # Check nodes
-    nodes = graph.nodes
+    nodes = orchestrator.graph.nodes
     assert "draft" in nodes
     assert "execute_tools" in nodes
     assert "revise" in nodes
 
-    # Check edges
-    # Note: compiled graphs might have different internal structures,
-    # but we can check the logical flow if we access the underlying builder if possible,
-    # or just check that we can at least get the graph visualization/description.
 
-    graph.get_graph()
+async def test_graph_has_router_node():
+    orchestrator = AgentOrchestrator()
+    await orchestrator._ensure_initialized()
+    assert "classify" in orchestrator.graph.nodes
 
-    # Verify we can find the expected path START -> draft -> execute_tools -> revise
-    # In LangGraph, edges are a bit harder to inspect directly from CompiledStateGraph
-    # but we can check if the nodes exist and maybe try a dry run if mocked.
-    assert len(nodes) >= 3
+
+async def test_graph_has_arq_extract_node():
+    orchestrator = AgentOrchestrator()
+    await orchestrator._ensure_initialized()
+    assert "arq_extract" in orchestrator.graph.nodes
+
+
+async def test_graph_is_renderable():
+    """Garante que o grafo compilado pode ser inspecionado sem erros."""
+    orchestrator = AgentOrchestrator()
+    await orchestrator._ensure_initialized()
+    orchestrator.graph.get_graph()  # não deve lançar exceção
 
 
 def test_event_loop_continua_sem_iteracoes():
