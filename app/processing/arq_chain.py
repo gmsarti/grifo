@@ -62,4 +62,6 @@ def get_arq_extractor_chain():
     prompt = ChatPromptTemplate.from_messages([
         ("human", "{prompt_text}"),
     ])
-    return prompt | llm.with_structured_output(PadroesExtraidos)
+    # method="function_calling" porque PadroesExtraidos usa list[dict[str, Any]],
+    # que não é suportado pelo modo strict JSON schema da OpenAI.
+    return prompt | llm.with_structured_output(PadroesExtraidos, method="function_calling")

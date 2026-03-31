@@ -24,12 +24,16 @@ _VOCAB_SUMMARY = json.dumps(
     ensure_ascii=False,
 )
 
+# Chaves do JSON ({{ / }}) precisam ser escapadas para o LangChain não as interpretar
+# como variáveis de template ao renderizar o ChatPromptTemplate.
+_VOCAB_SUMMARY_ESCAPED = _VOCAB_SUMMARY.replace("{", "{{").replace("}", "}}")
+
 _SYSTEM = f"""Você é um classificador de intenções para um assistente de layout arquitetônico residencial.
 
 Zonas válidas: {json.dumps(ZONAS, ensure_ascii=False)}
 
 Famílias de móveis por zona (use SOMENTE estes nomes exatos ao preencher 'mobiliario'):
-{_VOCAB_SUMMARY}
+{_VOCAB_SUMMARY_ESCAPED}
 
 Classifique a mensagem em uma das duas intenções:
 
@@ -83,4 +87,6 @@ def get_router_chain():
         ("system", _SYSTEM),
         ("human", "{message}"),
     ])
-    return prompt | llm.with_structured_output(RouterDecision)
+    # method="function_calling" evita o UserWarning do Pydantic causado pelo
+    # modo strict da OpenAI ao serializar o campo 'parsed' do RouterDecision.
+    return prompt | llm.with_structured_output(RouterDecision, method="function_calling")
