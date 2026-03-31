@@ -21,6 +21,7 @@ from app.processing.chains import (
     get_revisor,
 )
 from app.processing.memory import StoreMemoryManager, VectorizedMessageHistory
+from app.processing.router_chain import get_router_chain
 from app.processing.tools import AGENT_TOOLS
 
 logger = get_logger(__name__)
@@ -33,9 +34,13 @@ _PROVIDERS_WITH_COST_TRACKING = {"openai"}
 
 
 class ReflexionState(MessagesState):
-    """Estado do grafo com contador explícito de iterações da reflexão."""
+    """Estado do grafo com roteamento, extração arquitetônica e reflexão."""
 
     iteration_count: Annotated[int, operator.add]
+    # Campos preenchidos pelo nó classify — usados para roteamento e extração arq.
+    intent: str          # "reflexion" | "arq_extract"
+    zona: str | None     # zona identificada pelo router, ou None
+    mobiliario: list[str]  # móveis identificados pelo router
 
 
 def _extract_usage_from_messages(messages: list) -> dict:
@@ -100,6 +105,7 @@ class AgentOrchestrator:
         self.first_responder = get_first_responder(self.fast_llm)
         self.revisor = get_revisor(self.reasoner_llm)
         self.knowledge_extractor = get_knowledge_extractor(self.fast_llm)
+        self.router_chain = get_router_chain()
 
     async def _ensure_initialized(self):
         """Lazily initializes async persistent components and compiles the graph."""
@@ -135,23 +141,33 @@ class AgentOrchestrator:
         self.graph = None
 
     def _create_graph(self):
-        """Creates the LangGraph with checkpointer and store."""
+        """Creates the LangGraph with router, reflexion loop, and arq extractor."""
         builder = StateGraph(ReflexionState)
 
         # Add nodes
+        builder.add_node("classify", self.classify_node)
         builder.add_node("retrieve_memory", self.retrieve_memory_node)
         builder.add_node("draft", self.draft_node)
         builder.add_node("execute_tools", self.reflexion_tools)
         builder.add_node("revise", self.revise_node)
         builder.add_node("extract_knowledge", self.extract_knowledge_node)
+        builder.add_node("arq_extract", self.arq_extract_node)
 
-        # Define edges
-        builder.add_edge(START, "retrieve_memory")
+        # Router: classify first, then branch
+        builder.add_edge(START, "classify")
+        builder.add_conditional_edges(
+            "classify",
+            self.route_after_classify,
+            {
+                "retrieve_memory": "retrieve_memory",
+                "arq_extract": "arq_extract",
+            },
+        )
+
+        # Reflexion loop
         builder.add_edge("retrieve_memory", "draft")
         builder.add_edge("draft", "execute_tools")
         builder.add_edge("execute_tools", "revise")
-
-        # O ciclo de reflexão agora termina na extração de conhecimento ao invés de END
         builder.add_conditional_edges(
             "revise",
             self.event_loop,
@@ -161,6 +177,9 @@ class AgentOrchestrator:
             },
         )
         builder.add_edge("extract_knowledge", END)
+
+        # Arq extractor path
+        builder.add_edge("arq_extract", END)
 
         return builder.compile(checkpointer=self.checkpointer, store=self.store)
 
@@ -202,6 +221,89 @@ class AgentOrchestrator:
                 return {"messages": [memory_msg]}
 
         return {"messages": []}
+
+    async def classify_node(self, state: ReflexionState, config=None):
+        """
+        Classifica a intenção da mensagem e extrai zona/mobiliário se for arq_extract.
+        Usa o modelo rápido — não exige raciocínio avançado.
+        """
+        last_human = next(
+            (m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)),
+            None,
+        )
+        message = last_human.content if last_human else ""
+
+        with timed_process("Intent Classification", logger):
+            decision = await self.router_chain.ainvoke({"message": message})
+
+        logger.info(
+            "Router decision: intent=%s zona=%s mobiliario=%s",
+            decision.intent,
+            decision.zona,
+            decision.mobiliario,
+        )
+        return {
+            "intent": decision.intent,
+            "zona": decision.zona,
+            "mobiliario": decision.mobiliario,
+        }
+
+    def route_after_classify(
+        self, state: ReflexionState
+    ) -> Literal["retrieve_memory", "arq_extract"]:
+        """
+        Roteia para arq_extract se a intenção for extração arquitetônica E uma zona
+        tiver sido identificada. Sem zona, cai no reflexion (o LLM pode pedir mais
+        contexto ao usuário).
+        """
+        if state.get("intent") == "arq_extract" and state.get("zona"):
+            return "arq_extract"
+        return "retrieve_memory"
+
+    async def arq_extract_node(self, state: ReflexionState, config=None):
+        """
+        Invoca o pipeline de extração de padrões arquitetônicos e devolve o resultado
+        como mensagem do assistente em JSON formatado.
+
+        Se nenhum mobiliário foi identificado pelo router, usa todos os móveis da zona.
+        """
+        import json
+
+        from fastapi import HTTPException
+
+        from app.data.arq_vocabulary import OBJETOS_POR_ZONA
+        from app.schemas.arq_schemas import ExtrairPadroesRequest
+        from app.services.arq_service import arq_service
+
+        zona = state["zona"]
+        mobiliario = state.get("mobiliario") or []
+
+        # Fallback: usa todas as famílias da zona se nenhum móvel foi identificado
+        if not mobiliario:
+            mobiliario = list(OBJETOS_POR_ZONA.get(zona, {}).keys())
+
+        last_human = next(
+            (m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)),
+            None,
+        )
+        texto = last_human.content if last_human else ""
+
+        with timed_process("Arq Pattern Extraction", logger):
+            try:
+                request = ExtrairPadroesRequest(
+                    zona=zona, mobiliario=mobiliario, texto=texto
+                )
+                result = await arq_service.extrair_padroes(request)
+                response_content = json.dumps(
+                    result.model_dump(), ensure_ascii=False, indent=2
+                )
+            except HTTPException as e:
+                response_content = f"Erro na extração de padrões: {e.detail}"
+            except Exception as e:
+                logger.exception("arq_extract_node: erro inesperado")
+                response_content = f"Erro inesperado na extração de padrões: {e}"
+
+        return {"messages": [AIMessage(content=response_content)]}
 
     async def draft_node(self, state: MessagesState, config=None):
         """Node for the initial draft using the FAST model."""
@@ -318,7 +420,14 @@ class AgentOrchestrator:
             messages.append(SystemMessage(content=system_prompt))
         messages.append(HumanMessage(content=message))
 
-        inputs = {"messages": messages}
+        inputs = {
+            "messages": messages,
+            # Campos do router — preenchidos pelo nó classify, inicializados aqui
+            # para satisfazer o TypedDict do estado do LangGraph.
+            "intent": "reflexion",
+            "zona": None,
+            "mobiliario": [],
+        }
 
         # 0. Set Log Context for automatic enrichment
         from app.core.logging import set_log_context
