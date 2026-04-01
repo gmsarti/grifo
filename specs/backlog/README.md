@@ -28,7 +28,7 @@ Os detalhes técnicos das tarefas estão divididos por tema para facilitar a lei
 | ✅ | B-010 | Validação e sanitização do `system_prompt` | Segurança | Média | [security.md](security.md#b-010-validação-e-sanitização-do-system_prompt) |
 | ❌ | B-011 | Streaming de resposta no endpoint de chat | Feature | Baixa | [features.md](features.md#b-011-streaming-de-resposta-no-endpoint-de-chat) |
 | ❌ | B-012 | Paginação nos endpoints de listagem | Melhoria | Baixa | [features.md](features.md#b-012-paginação-nos-endpoints-de-listagem) |
-| ❌ | B-013 | Pool de conexões ChromaDB | Melhoria | Baixa | [features.md](features.md#b-013-pool-de-conexões-chromadb) |
+| ✅ | B-013 | Pool de conexões ChromaDB | Melhoria | Baixa | [features.md](features.md#b-013-pool-de-conexões-chromadb) |
 | ❌ | B-014 | Testes de integração dependentes de APIs externas | Melhoria | Baixa | [features.md](features.md#b-014-testes-de-integração-dependentes-de-apis-externas) |
 | ❌ | B-015 | Chat multimodal — envio de imagens na conversa | Feature | Média | [features.md](features.md#b-015-chat-multimodal-envio-de-imagens-na-conversa) |
 | ❌ | B-016 | Ingestão de imagens no knowledge base | Feature | Média | [features.md](features.md#b-016-ingestão-de-imagens-no-knowledge-base) |
@@ -42,9 +42,9 @@ Os detalhes técnicos das tarefas estão divididos por tema para facilitar a lei
 | ❌ | B-024 | Checagem de Tipos Estática (Mypy) | Qualidade | Baixa | [platform.md](platform.md#b-024-checagem-de-tipos-estática-mypy) |
 | ❌ | B-025 | Migrações de Banco de Dados (Alembic) | Infra | Média | [platform.md](platform.md#b-025-migrações-de-banco-de-dados-alembic) |
 | ✅ | B-026 | Documentação de Arquitetura (Mermaid) | Doc | Baixa | [platform.md](platform.md#b-026-documentação-de-arquitetura-mermaid) |
-| ❌ | B-027 | `VectorStoreManager` não é thread-safe | Bug | **Alta** | [bugs.md](bugs.md#b-027-vectorstoremanager-não-é-thread-safe) |
-| ❌ | B-028 | BM25 desatualizado após exclusão de documento | Bug | Média | [bugs.md](bugs.md#b-028-bm25-fica-desatualizado-após-exclusão-de-documento) |
-| ❌ | B-029 | `search_history` síncrono bloqueia o event loop | Bug | **Alta** | [bugs.md](bugs.md#b-029-search_history-síncrono-bloqueia-o-event-loop) |
+| ✅ | B-027 | `VectorStoreManager` não é thread-safe | Bug | **Alta** | [bugs.md](bugs.md#b-027-vectorstoremanager-não-é-thread-safe) |
+| ✅ | B-028 | BM25 desatualizado após exclusão de documento | Bug | Média | [bugs.md](bugs.md#b-028-bm25-fica-desatualizado-após-exclusão-de-documento) |
+| ✅ | B-029 | `search_history` síncrono bloqueia o event loop | Bug | **Alta** | [bugs.md](bugs.md#b-029-search_history-síncrono-bloqueia-o-event-loop) |
 | ❌ | B-030 | Embeddings acoplados ao provider OpenAI | Melhoria | Média | [features.md](features.md#b-030-embeddings-acoplados-ao-provider-openai) |
 | ❌ | B-031 | `extract_knowledge` executa em toda interação | Melhoria | Baixa | [features.md](features.md#b-031-extract_knowledge-executa-em-toda-interação-sem-critério-de-relevância) |
 | ❌ | B-032 | Checkpointer SQLite acumula dados indefinidamente | Bug | Média | [platform.md](platform.md#b-032-checkpointer-sqlite-acumula-dados-indefinidamente) |

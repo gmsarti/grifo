@@ -22,7 +22,10 @@
       "Bash(source .venv/bin/activate)",
       "Bash(pytest -m prompt_contract --collect-only -q)",
       "Bash(.venv/bin/pytest)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(python3 -m pytest tests/unit/test_bm25.py tests/unit/test_bm25_rebuild.py tests/unit/test_hybrid.py tests/unit/test_memory.py::test_search_history_retorna_prefixo_correto tests/integration/test_vector_ingestion.py tests/integration/test_e2e_demo.py -x --tb=short -q)",
+      "Bash(pyenv local:*)",
+      "Bash(python3 -m pytest tests/unit/test_bm25.py tests/unit/test_bm25_rebuild.py tests/unit/test_hybrid.py \"tests/unit/test_memory.py::test_search_history_retorna_prefixo_correto\" tests/integration/test_vector_ingestion.py tests/integration/test_e2e_demo.py -x --tb=short -q)"
     ]
   }
 }

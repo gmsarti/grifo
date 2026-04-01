@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from langchain_chroma import Chroma
@@ -43,9 +44,12 @@ class VectorizedMessageHistory:
         # but we can delete with a match-all filter for this collection since it's scoped by collection_name
         self.vector_store.delete(where={"thread_id": self.thread_id})
 
-    def search_history(self, query: str, k: int = 3) -> str:
-        # (existing search_history code...)
-        results = self.vector_store.similarity_search(query, k=k)
+    async def search_history(self, query: str, k: int = 3) -> str:
+        # B-029: executa a busca síncrona no thread pool para não bloquear o event loop
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(
+            None, self.vector_store.similarity_search, query, k
+        )
         if not results:
             return ""
 

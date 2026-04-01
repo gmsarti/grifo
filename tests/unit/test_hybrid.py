@@ -17,7 +17,7 @@ def vector_manager():
         return vm
 
 
-def test_hybrid_retrieval(vector_manager):
+async def test_hybrid_retrieval(vector_manager):
     docs = [
         Document(page_content="O gato está no telhado", metadata={"id": 1}),
         Document(page_content="O cachorro está no jardim", metadata={"id": 2}),
@@ -29,7 +29,7 @@ def test_hybrid_retrieval(vector_manager):
     vector_manager.vector_store.as_retriever.return_value = mock_retriever
 
     # Adicionando documentos (isso inicializa o BM25 e o Ensemble)
-    vector_manager.add_documents(docs)
+    await vector_manager.add_documents(docs)
 
     assert vector_manager.hybrid_retriever is not None
 
@@ -58,14 +58,14 @@ def test_hybrid_retrieval(vector_manager):
     mock_bm25.invoke.assert_called()
 
 
-def test_unified_search_interface(vector_manager):
+async def test_unified_search_interface(vector_manager):
     docs = [Document(page_content="teste", metadata={"id": 1})]
 
     # Mock carefully to avoid Pydantic validation error in add_documents
     mock_retriever = MagicMock(spec=BaseRetriever)
     vector_manager.vector_store.as_retriever.return_value = mock_retriever
 
-    vector_manager.add_documents(docs)
+    await vector_manager.add_documents(docs)
 
     with patch.object(vector_manager, "search_hybrid") as mock_hybrid:
         mock_hybrid.return_value = docs

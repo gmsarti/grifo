@@ -96,6 +96,10 @@ class AgentOrchestrator:
         self.store_manager = StoreMemoryManager(store) if store else None
         self.graph = None
 
+        # B-013: cache de instâncias VectorizedMessageHistory por (project_id, thread_id)
+        # evita recriar a conexão Chroma a cada request
+        self._history_dbs: dict[tuple[str, str], VectorizedMessageHistory] = {}
+
         # Initialize chains
         self.first_responder = get_first_responder(self.fast_llm)
         self.revisor = get_revisor(self.reasoner_llm)
@@ -133,6 +137,15 @@ class AgentOrchestrator:
         self.checkpointer = None
         self.store = None
         self.graph = None
+
+    def _get_history_db(
+        self, project_id: str, thread_id: str
+    ) -> VectorizedMessageHistory:
+        """Retorna (ou cria) a instância VectorizedMessageHistory para o par projeto/thread."""
+        key = (project_id, thread_id)
+        if key not in self._history_dbs:
+            self._history_dbs[key] = VectorizedMessageHistory(project_id, thread_id)
+        return self._history_dbs[key]
 
     def _create_graph(self):
         """Creates the LangGraph with checkpointer and store."""
@@ -180,8 +193,8 @@ class AgentOrchestrator:
             context_parts = []
 
             # 1. Short-term Vectorized History (Scoped by project)
-            history_db = VectorizedMessageHistory(project_id, thread_id)
-            hist_context = history_db.search_history(last_message)
+            history_db = self._get_history_db(project_id, thread_id)
+            hist_context = await history_db.search_history(last_message)
             if hist_context:
                 context_parts.append(f"Relevant Conversation History:\n{hist_context}")
 
@@ -327,7 +340,7 @@ class AgentOrchestrator:
             user_id=user_id, project_id=project_id, thread_id=thread_id
         ):
             # 1. Update short-term history (scoped by project)
-            history_db = VectorizedMessageHistory(project_id, thread_id)
+            history_db = self._get_history_db(project_id, thread_id)
             await history_db.add_message(inputs["messages"][0])
 
             try:

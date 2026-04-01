@@ -83,7 +83,7 @@ async def test_search_history_retorna_prefixo_correto():
             MagicMock(page_content="Hello world", metadata={"type": "human"})
         ]
 
-        res = history.search_history("hello")
+        res = await history.search_history("hello")
 
         assert "User: Hello world" in res
 

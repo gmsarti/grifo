@@ -3,7 +3,7 @@ from unittest.mock import patch
 from langchain_core.documents import Document
 
 
-def test_e2e_ingestion_and_retrieval(vector_manager):
+async def test_e2e_ingestion_and_retrieval(vector_manager):
     """
     Testa o fluxo completo: Ingestão de arquivo -> Persistência -> Retrieval.
     Nota: Usamos mocks para evitar chamadas reais à API da OpenAI e persistência em disco.
@@ -31,7 +31,7 @@ def test_e2e_ingestion_and_retrieval(vector_manager):
             )
         ]
 
-        vector_manager.ingest_file("test.txt")
+        await vector_manager.ingest_file("test.txt")
 
         context = vector_manager.search_context("O que é o Projeto Grifo?")
 

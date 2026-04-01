@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -76,6 +77,8 @@ class VectorStoreManager:
         self.bm25_retriever = None
         self.hybrid_retriever = None  # replaced ensemble
         self._all_documents = []  # Track all docs for BM25 updates
+        # B-027: lock para proteger mutações concorrentes em _all_documents e BM25
+        self._lock = asyncio.Lock()
         self._rebuild_bm25_from_chroma()
 
     def _rebuild_bm25_from_chroma(self):
@@ -92,7 +95,16 @@ class VectorStoreManager:
             return
 
         self._all_documents = docs
-        self.bm25_retriever = BM25Retriever.from_documents(docs, k=5)
+        self._rebuild_bm25()
+
+    def _rebuild_bm25(self):
+        """Reconstrói o índice BM25 e o HybridRetriever a partir de self._all_documents."""
+        # B-028: método extraído para reutilização em add_documents e delete_document
+        if not self._all_documents:
+            self.bm25_retriever = None
+            self.hybrid_retriever = None
+            return
+        self.bm25_retriever = BM25Retriever.from_documents(self._all_documents, k=5)
         self.hybrid_retriever = HybridRetriever(
             vector_retriever=self.vector_store.as_retriever(search_kwargs={"k": 5}),
             bm25_retriever=self.bm25_retriever,
@@ -139,32 +151,24 @@ class VectorStoreManager:
         self.hybrid_retriever.k = k
         return self.hybrid_retriever.invoke(query)
 
-    def add_documents(self, documents: list[Document]):
-        """Adiciona docs, persiste e atualiza retrievers."""
-        self._all_documents.extend(documents)
-        self.vector_store.add_documents(documents)
+    async def add_documents(self, documents: list[Document]):
+        """Adiciona docs, persiste e atualiza retrievers. Thread-safe via asyncio.Lock."""
+        # B-027: lock previne race condition em _all_documents e no índice BM25
+        async with self._lock:
+            self._all_documents.extend(documents)
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self.vector_store.add_documents, documents)
+            self._rebuild_bm25()
 
-        if self._all_documents:
-            self.bm25_retriever = BM25Retriever.from_documents(
-                self._all_documents,
-                k=5,
-            )
-            # Custom Hybrid Retriever with RRF
-            self.hybrid_retriever = HybridRetriever(
-                vector_retriever=self.vector_store.as_retriever(search_kwargs={"k": 5}),
-                bm25_retriever=self.bm25_retriever,
-                k=5,
-            )
-
-    def ingest_file(self, file_path: str):
+    async def ingest_file(self, file_path: str):
         """Ingestão de arquivo."""
         documents = self.file_service.process_file(file_path)
-        self.add_documents(documents)
+        await self.add_documents(documents)
 
-    def ingest_url(self, url: str):
+    async def ingest_url(self, url: str):
         """Ingestão de URL."""
         documents = self.web_service.process_url(url)
-        self.add_documents(documents)
+        await self.add_documents(documents)
 
     def list_documents(self) -> list[dict]:
         """
@@ -201,11 +205,8 @@ class VectorStoreManager:
         # No Chroma via LangChain, podemos deletar usando filtros de metadados
         self.vector_store.delete(where={"source": doc_id})
 
-        # Opcional: Atualizar BM25 e total de documentos se necessário
-        # Por simplicidade, assumimos que o BM25 será recriado na próxima adição
         self._all_documents = [
             d for d in self._all_documents if d.metadata.get("source") != doc_id
         ]
-        if not self._all_documents:
-            self.bm25_retriever = None
-            self.hybrid_retriever = None
+        # B-028: reconstrói BM25 imediatamente para não retornar chunks deletados
+        self._rebuild_bm25()

@@ -66,7 +66,7 @@ Adicionar parâmetros `limit` e `offset` nos endpoints e nas queries.
 
 ---
 
-### ❌ [B-013] Pool de conexões ChromaDB
+### ✅ [B-013] Pool de conexões ChromaDB
 
 - **Tipo**: Melhoria
 - **Prioridade**: Baixa

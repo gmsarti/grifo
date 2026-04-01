@@ -116,7 +116,7 @@ Adicionar validação de tamanho com limite configurável (ex: 50MB).
 
 ---
 
-### ❌ [B-027] `VectorStoreManager` não é thread-safe
+### ✅ [B-027] `VectorStoreManager` não é thread-safe
 
 - **Tipo**: Bug
 - **Prioridade**: Alta
@@ -154,7 +154,7 @@ class VectorStoreManager:
 
 ---
 
-### ❌ [B-028] BM25 fica desatualizado após exclusão de documento
+### ✅ [B-028] BM25 fica desatualizado após exclusão de documento
 
 - **Tipo**: Bug
 - **Prioridade**: Média
@@ -194,7 +194,7 @@ Extrair a lógica de rebuild para um método privado `_rebuild_bm25()` reutiliz�
 
 ---
 
-### ❌ [B-029] `search_history` síncrono bloqueia o event loop
+### ✅ [B-029] `search_history` síncrono bloqueia o event loop
 
 - **Tipo**: Bug
 - **Prioridade**: Alta

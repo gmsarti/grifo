@@ -1,7 +1,7 @@
 from langchain_core.documents import Document
 
 
-def test_bm25_retrieval(vector_manager):
+async def test_bm25_retrieval(vector_manager):
     docs = [
         Document(page_content="O gato está no telhado", metadata={"id": 1}),
         Document(page_content="O cachorro está no jardim", metadata={"id": 2}),
@@ -9,7 +9,7 @@ def test_bm25_retrieval(vector_manager):
     ]
 
     # Adicionando documentos (isso inicializa o BM25)
-    vector_manager.add_documents(docs)
+    await vector_manager.add_documents(docs)
 
     # Testando busca por palavra-chave exata
     results = vector_manager.search_bm25("gato")

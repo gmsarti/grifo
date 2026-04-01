@@ -142,7 +142,7 @@ async def upload_file(
         with temp_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        vector_store.ingest_file(str(temp_path))
+        await vector_store.ingest_file(str(temp_path))
 
         return {"status": "success", "filename": file.filename}
     except Exception as e:
@@ -157,7 +157,7 @@ async def ingest_url(
     request: UrlRequest, vector_store: VectorStoreManager = Depends(get_vector_store)
 ):
     try:
-        vector_store.ingest_url(request.url)
+        await vector_store.ingest_url(request.url)
         return {"status": "success", "url": request.url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
