@@ -1,7 +1,7 @@
 """
 Chain de extração de padrões arquitetônicos.
 
-Carrega o prompt de app/prompts/extrator_padroes_arq.md em tempo de import
+Carrega o prompt de app/prompts/extrator_padroes_arq_v2.md em tempo de import
 (falha rápido se o arquivo estiver ausente) e expõe duas funções públicas:
 
   render_arq_prompt(objetos, lados, zonas, texto) -> str
@@ -10,12 +10,13 @@ Carrega o prompt de app/prompts/extrator_padroes_arq.md em tempo de import
 
   get_arq_extractor_chain() -> Runnable
       Constrói e devolve a chain LangChain. Input: {"prompt_text": str}.
-      Output: PadroesExtraidos (via with_structured_output).
+      Output: PadroesExtraidos (via parser JSON customizado).
 """
 
 import json
 from pathlib import Path
 
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from app.core.llm import get_reasoner
@@ -23,7 +24,7 @@ from app.schemas.arq_schemas import PadroesExtraidos
 
 # Carregado uma única vez na inicialização do módulo.
 # Se o arquivo não existir, a aplicação falha na importação — comportamento intencional.
-_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "extrator_padroes_arq.md"
+_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "extrator_padroes_arq_v2.md"
 _PROMPT_TEMPLATE: str = _PROMPT_PATH.read_text(encoding="utf-8")
 
 
@@ -48,6 +49,24 @@ def render_arq_prompt(
     return rendered
 
 
+def _parse_padroes(text: str) -> PadroesExtraidos:
+    """
+    Converte a saída de texto livre do LLM em PadroesExtraidos.
+
+    O prompt instrui o LLM a retornar uma lista JSON pura (ex: [{...}, {...}]).
+    with_structured_output(method="function_calling") é incompatível com esse
+    formato porque espera que o LLM chame uma função, não que escreva JSON diretamente.
+    Este parser resolve o conflito sem modificar o prompt.
+    """
+    text = text.strip()
+    # Remove bloco de código Markdown se o modelo incluir ```json ... ```
+    if text.startswith("```"):
+        lines = text.splitlines()
+        text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+    padroes = json.loads(text)
+    return PadroesExtraidos(padroes=padroes)
+
+
 def get_arq_extractor_chain():
     """
     Constrói a chain de extração de padrões arquitetônicos.
@@ -62,6 +81,4 @@ def get_arq_extractor_chain():
     prompt = ChatPromptTemplate.from_messages([
         ("human", "{prompt_text}"),
     ])
-    # method="function_calling" porque PadroesExtraidos usa list[dict[str, Any]],
-    # que não é suportado pelo modo strict JSON schema da OpenAI.
-    return prompt | llm.with_structured_output(PadroesExtraidos, method="function_calling")
+    return prompt | llm | StrOutputParser() | _parse_padroes

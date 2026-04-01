@@ -728,6 +728,7 @@ class TestArqExtractNode:
                     "lado": "fundos",
                 }
             ],
+            texto_resumo="Os fundos de cama deve estar encostado na parede.",
         )
 
         with patch("app.services.arq_service.arq_service") as mock_service:
@@ -753,7 +754,7 @@ class TestArqExtractNode:
         orchestrator = AgentOrchestrator(store=InMemoryStore())
 
         mock_result = ExtrairPadroesResponse(
-            zona="quarto", mobiliario_valido=[], padroes=[]
+            zona="quarto", mobiliario_valido=[], padroes=[], texto_resumo="Nenhum padrão identificado."
         )
 
         with patch("app.services.arq_service.arq_service") as mock_service:

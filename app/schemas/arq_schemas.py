@@ -33,3 +33,6 @@ class ExtrairPadroesResponse(BaseModel):
     zona: str
     mobiliario_valido: list[str]
     padroes: list[dict[str, Any]]
+    texto_resumo: str = Field(
+        description="Padrões extraídos em linguagem natural, prontos para exibição ao usuário."
+    )

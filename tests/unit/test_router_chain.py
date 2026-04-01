@@ -45,7 +45,7 @@ def test_get_router_chain_calls_with_structured_output():
         chain = get_router_chain()
 
     assert chain is not None
-    mock_llm.with_structured_output.assert_called_once_with(RouterDecision)
+    mock_llm.with_structured_output.assert_called_once_with(RouterDecision, method="function_calling")
 
 
 def test_get_router_chain_uses_fast_model_not_reasoner():

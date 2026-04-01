@@ -20,6 +20,7 @@ from app.data.arq_vocabulary import (
     get_lados_for_objects,
 )
 from app.processing.arq_chain import get_arq_extractor_chain, render_arq_prompt
+from app.processing.arq_text_converter import padroes_para_texto
 from app.schemas.arq_schemas import ExtrairPadroesRequest, ExtrairPadroesResponse
 
 logger = get_logger(__name__)
@@ -153,6 +154,7 @@ class ArqService:
             zona=request.zona,
             mobiliario_valido=request.mobiliario,
             padroes=valid_patterns,
+            texto_resumo=padroes_para_texto(valid_patterns),
         )
 
 

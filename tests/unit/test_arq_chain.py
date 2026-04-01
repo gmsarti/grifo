@@ -60,34 +60,33 @@ def test_render_arq_prompt_preserves_non_variable_content():
 # ── get_arq_extractor_chain ───────────────────────────────────────────────────
 
 
-def test_get_arq_extractor_chain_calls_with_structured_output():
-    mock_llm = MagicMock()
-    mock_llm.with_structured_output.return_value = MagicMock()
-
-    with patch("app.processing.arq_chain.get_reasoner", return_value=mock_llm):
-        chain = get_arq_extractor_chain()
-
-    assert chain is not None
-    mock_llm.with_structured_output.assert_called_once_with(PadroesExtraidos)
-
-
 def test_get_arq_extractor_chain_uses_reasoner_not_fast_model():
-    """Extração estruturada com gramática complexa usa o modelo de maior capacidade."""
+    """Extração com gramática complexa usa o modelo de maior capacidade de raciocínio."""
     mock_llm = MagicMock()
-    mock_llm.with_structured_output.return_value = MagicMock()
+    mock_llm.__or__ = MagicMock(return_value=MagicMock())
 
-    # arq_chain.py importa apenas get_reasoner — patchamos no ponto de uso
     with patch("app.processing.arq_chain.get_reasoner", return_value=mock_llm) as mock_reasoner:
         get_arq_extractor_chain()
 
     mock_reasoner.assert_called_once()
 
 
+def test_get_arq_extractor_chain_returns_runnable():
+    """get_arq_extractor_chain deve retornar um objeto não nulo (Runnable LCEL)."""
+    mock_llm = MagicMock()
+    mock_llm.__or__ = MagicMock(return_value=MagicMock())
+
+    with patch("app.processing.arq_chain.get_reasoner", return_value=mock_llm):
+        chain = get_arq_extractor_chain()
+
+    assert chain is not None
+
+
 @pytest.mark.prompt_contract
 def test_get_arq_extractor_chain_prompt_accepts_prompt_text_variable():
     """O template da chain deve usar {prompt_text} como única variável de entrada."""
     mock_llm = MagicMock()
-    mock_llm.with_structured_output.return_value = MagicMock()
+    mock_llm.__or__ = MagicMock(return_value=MagicMock())
 
     with patch("app.processing.arq_chain.get_reasoner", return_value=mock_llm):
         chain = get_arq_extractor_chain()

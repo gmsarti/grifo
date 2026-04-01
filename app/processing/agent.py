@@ -288,15 +288,30 @@ class AgentOrchestrator:
         )
         texto = last_human.content if last_human else ""
 
+        configurable = config.get("configurable", {}) if config else {}
+        user_id = configurable.get("user_id", "default_user")
+        thread_id = configurable.get("user_thread_id", "default")
+
         with timed_process("Arq Pattern Extraction", logger):
             try:
                 request = ExtrairPadroesRequest(
                     zona=zona, mobiliario=mobiliario, texto=texto
                 )
                 result = await arq_service.extrair_padroes(request)
-                response_content = json.dumps(
-                    result.model_dump(), ensure_ascii=False, indent=2
+                from app.processing.arq_text_converter import padroes_para_markdown
+                response_content = padroes_para_markdown(
+                    result.padroes,
+                    zona=result.zona,
+                    mobiliario=result.mobiliario_valido,
                 )
+                if result.padroes and self.store_manager:
+                    await self._save_arq_patterns_to_memory(
+                        user_id=user_id,
+                        thread_id=thread_id,
+                        zona=zona,
+                        mobiliario=mobiliario,
+                        padroes=result.padroes,
+                    )
             except HTTPException as e:
                 response_content = f"Erro na extração de padrões: {e.detail}"
             except Exception as e:
@@ -304,6 +319,49 @@ class AgentOrchestrator:
                 response_content = f"Erro inesperado na extração de padrões: {e}"
 
         return {"messages": [AIMessage(content=response_content)]}
+
+    async def _save_arq_patterns_to_memory(
+        self,
+        user_id: str,
+        thread_id: str,
+        zona: str,
+        mobiliario: list[str],
+        padroes: list[dict],
+    ) -> None:
+        """
+        Persiste os padrões extraídos na memória de longo prazo do usuário.
+
+        Armazena uma entrada por chamada de extração, com descrição legível
+        (para busca semântica) e o JSON completo dos padrões (para recuperação
+        estruturada futura). Entradas anteriores da mesma zona não são
+        sobrescritas — acumulam-se como histórico de decisões.
+        """
+        import json
+
+        mobiliario_str = ", ".join(mobiliario)
+        pattern_types = ", ".join(
+            p.get("padrao", p.get("tipo", "desconhecido")) for p in padroes
+        )
+        fact_content = (
+            f"[Layout Arquitetônico] "
+            f"Zona: {zona}. "
+            f"Mobiliário: {mobiliario_str}. "
+            f"{len(padroes)} padrão(ões) definido(s) ({pattern_types}). "
+            f"JSON: {json.dumps(padroes, ensure_ascii=False)}"
+        )
+        fact_key = f"arq_{zona}_{uuid.uuid4().hex[:8]}"
+        try:
+            await self.store_manager.save_fact(
+                user_id, fact_key, fact_content, thread_id=thread_id
+            )
+            logger.info(
+                "Arq patterns saved to memory: zona=%s patterns=%d user=%s",
+                zona,
+                len(padroes),
+                user_id,
+            )
+        except Exception:
+            logger.exception("Falha ao salvar padrões arq na memória de longo prazo")
 
     async def draft_node(self, state: MessagesState, config=None):
         """Node for the initial draft using the FAST model."""

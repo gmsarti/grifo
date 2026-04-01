@@ -129,6 +129,35 @@ async def test_extrair_padroes_returns_mobiliario_valido():
     assert result.mobiliario_valido == ["cama", "criado-mudo"]
 
 
+async def test_extrair_padroes_returns_texto_resumo():
+    mock_chain = MagicMock()
+    mock_chain.ainvoke = AsyncMock(return_value=PadroesExtraidos(padroes=[]))
+
+    with patch("app.services.arq_service._get_chain", return_value=mock_chain):
+        service = ArqService()
+        request = ExtrairPadroesRequest(zona="quarto", mobiliario=["cama"], texto="x")
+        result = await service.extrair_padroes(request)
+
+    assert isinstance(result.texto_resumo, str)
+    assert len(result.texto_resumo) > 0
+
+
+async def test_extrair_padroes_texto_resumo_reflects_patterns():
+    padroes = [
+        {"tipo": "restricao", "padrao": "encostado", "objeto": {"nome": "cama"}, "lado": "fundos"}
+    ]
+    mock_chain = MagicMock()
+    mock_chain.ainvoke = AsyncMock(return_value=PadroesExtraidos(padroes=padroes))
+
+    with patch("app.services.arq_service._get_chain", return_value=mock_chain):
+        service = ArqService()
+        request = ExtrairPadroesRequest(zona="quarto", mobiliario=["cama"], texto="x")
+        result = await service.extrair_padroes(request)
+
+    assert "cama" in result.texto_resumo
+    assert "encostado" in result.texto_resumo
+
+
 async def test_extrair_padroes_passes_rendered_prompt_to_chain():
     mock_chain = MagicMock()
     mock_chain.ainvoke = AsyncMock(return_value=PadroesExtraidos(padroes=[]))
