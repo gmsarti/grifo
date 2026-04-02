@@ -1,4 +1,4 @@
-import shutil
+import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -36,7 +36,7 @@ async def reset_orchestrator():
     if _orchestrator:
         try:
             await _orchestrator.close()
-        except Exception:
+        except Exception:  # noqa: S110 nosec B110 — best-effort cleanup on shutdown
             pass
         _orchestrator = None
 
@@ -134,22 +134,15 @@ async def upload_file(
     file: UploadFile = File(...),
     vector_store: VectorStoreManager = Depends(get_vector_store),
 ):
-    temp_dir = Path("/tmp/grifo_ingestion")
-    temp_dir.mkdir(parents=True, exist_ok=True)
-    temp_path = temp_dir / file.filename
-
-    try:
-        with temp_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        await vector_store.ingest_file(str(temp_path))
-
-        return {"status": "success", "filename": file.filename}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if temp_path.exists():
-            temp_path.unlink()
+    safe_name = Path(file.filename).name if file.filename else "upload"
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir) / safe_name
+        tmp_path.write_bytes(await file.read())
+        try:
+            await vector_store.ingest_file(str(tmp_path))
+            return {"status": "success", "filename": file.filename}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/ingest/url")

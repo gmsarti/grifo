@@ -1,0 +1,103 @@
+# B-020: Pipeline de Segurança Contínua
+#
+# Estratégia deliberada:
+#   - Roda APENAS em push/PR para `main`.
+#   - Branches de feature ficam sem essa verificação para manter o fluxo fluido.
+#   - O pre-commit (detect-secrets + bandit) cobre o desenvolvedor localmente.
+#
+# Para forçar a verificação em qualquer branch basta trocar os triggers por:
+#   on: [push, pull_request]
+
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── B-017: SAST ─────────────────────────────────────────────────────────────
+  sast:
+    name: SAST (Bandit + Ruff S)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Ruff — regras de segurança (S)
+        run: uv run ruff check app/ --select S
+
+      - name: Bandit — análise estática de segurança
+        run: uv run bandit -r app/ --exclude app/cli -ll -f screen
+
+  # ── B-018: SCA ──────────────────────────────────────────────────────────────
+  sca:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    # Não bloqueia o merge: CVEs em dependências transitivas precisam de triage.
+    # Quando a equipe quiser tornar bloqueante, remova a linha abaixo.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: pip-audit — auditoria de vulnerabilidades
+        run: |
+          uv run pip-audit --format json -o audit-results.json || true
+          uv run pip-audit
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-results
+          path: audit-results.json
+
+  # ── B-019: Credenciais ──────────────────────────────────────────────────────
+  secrets-scan:
+    name: Detect Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Verifica novos segredos contra baseline
+        run: |
+          uv run detect-secrets scan --exclude-files 'uv\.lock' > .secrets.current
+          python3 -c "
+          import json, sys
+          with open('.secrets.baseline') as f:
+              base = {(fn, it['hashed_secret'])
+                      for fn, items in json.load(f)['results'].items()
+                      for it in items}
+          with open('.secrets.current') as f:
+              curr = {(fn, it['hashed_secret'])
+                      for fn, items in json.load(f)['results'].items()
+                      for it in items}
+          new = curr - base
+          if new:
+              print('::error::Novo(s) segredo(s) detectado(s) — adicione ao baseline se for falso positivo:')
+              for fn, h in sorted(new):
+                  print(f'  {fn} [{h}]')
+              sys.exit(1)
+          print('Nenhum novo segredo detectado.')
+          "

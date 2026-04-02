@@ -32,10 +32,10 @@ Os detalhes técnicos das tarefas estão divididos por tema para facilitar a lei
 | ❌ | B-014 | Testes de integração dependentes de APIs externas | Melhoria | Baixa | [features.md](features.md#b-014-testes-de-integração-dependentes-de-apis-externas) |
 | ❌ | B-015 | Chat multimodal — envio de imagens na conversa | Feature | Média | [features.md](features.md#b-015-chat-multimodal-envio-de-imagens-na-conversa) |
 | ❌ | B-016 | Ingestão de imagens no knowledge base | Feature | Média | [features.md](features.md#b-016-ingestão-de-imagens-no-knowledge-base) |
-| ❌ | B-017 | Verificação de Vulnerabilidades no Código (SAST) | Segurança | Média | [security.md](security.md#b-017-verificação-de-vulnerabilidades-no-código-sast) |
-| ❌ | B-018 | Auditoria de Dependências (SCA) | Segurança | Média | [security.md](security.md#b-018-auditoria-de-dependências-sca) |
-| ❌ | B-019 | Prevenção de Vazamento de Credenciais | Segurança | **Alta** | [security.md](security.md#b-019-prevenção-de-vazamento-de-credenciais) |
-| ❌ | B-020 | Pipeline de Segurança Contínua (GitHub Actions) | Segurança | Média | [security.md](security.md#b-020-pipeline-de-segurança-contínua-github-actions) |
+| ✅ | B-017 | Verificação de Vulnerabilidades no Código (SAST) | Segurança | Média | [security.md](security.md#b-017-verificação-de-vulnerabilidades-no-código-sast) |
+| ✅ | B-018 | Auditoria de Dependências (SCA) | Segurança | Média | [security.md](security.md#b-018-auditoria-de-dependências-sca) |
+| ✅ | B-019 | Prevenção de Vazamento de Credenciais | Segurança | **Alta** | [security.md](security.md#b-019-prevenção-de-vazamento-de-credenciais) |
+| ✅ | B-020 | Pipeline de Segurança Contínua (GitHub Actions) | Segurança | Média | [security.md](security.md#b-020-pipeline-de-segurança-contínua-github-actions) |
 | ❌ | B-021 | Observabilidade e Tracing (LangSmith / Langfuse) | Plataforma | **Alta** | [platform.md](platform.md#b-021-observabilidade-e-tracing-langsmith-langfuse) |
 | ❌ | B-022 | Pipeline de Avaliação de RAG (Evals) | Qualidade | Média | [platform.md](platform.md#b-022-pipeline-de-avaliação-de-rag-evals) |
 | ❌ | B-023 | Containerização e Orquestração (Docker) | Infra | **Alta** | [platform.md](platform.md#b-023-containerização-e-orquestração-docker) |

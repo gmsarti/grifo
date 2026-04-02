@@ -110,7 +110,7 @@ class ProjectCreate(BaseModel):
 
 ---
 
-### ❌ [B-017] Verificação de Vulnerabilidades no Código (SAST)
+### ✅ [B-017] Verificação de Vulnerabilidades no Código (SAST)
 
 - **Tipo**: Segurança
 - **Prioridade**: Média
@@ -135,7 +135,7 @@ Integrar o **Bandit** ao workflow de desenvolvimento.
 
 ---
 
-### ❌ [B-018] Auditoria de Dependências (SCA)
+### ✅ [B-018] Auditoria de Dependências (SCA)
 
 - **Tipo**: Segurança
 - **Prioridade**: Média
@@ -158,7 +158,7 @@ Implementar o **Safety** para auditar o `uv.lock`.
 
 ---
 
-### ❌ [B-019] Prevenção de Vazamento de Credenciais
+### ✅ [B-019] Prevenção de Vazamento de Credenciais
 
 - **Tipo**: Segurança
 - **Prioridade**: Alta
@@ -181,7 +181,7 @@ Implementar o **detect-secrets** no pipeline de pré-commit.
 
 ---
 
-### ❌ [B-020] Pipeline de Segurança Contínua (GitHub Actions)
+### ✅ [B-020] Pipeline de Segurança Contínua (GitHub Actions)
 
 - **Tipo**: Melhoria / Segurança
 - **Prioridade**: Média
